@@ -60,7 +60,116 @@ async function startServer() {
     { id: 'PT014', name: 'Charlotte Moore', email: 'c.moore@email.com', age: 36, gender: 'Female', lastVisit: '2024-04-12', status: 'Recovering', contact: '+1 234-567-8914' },
   ];
 
+  let medicalRecords = [
+    {
+      id: 'REC001',
+      patientId: 'PT001',
+      patientName: 'James Wilson',
+      type: 'Laboratory',
+      title: 'Complete Blood Count (CBC)',
+      date: '2024-04-20',
+      status: 'Final',
+      doctor: 'Dr. Sarah Wilson',
+      department: 'Hematology',
+      fileSize: '1.2 MB'
+    },
+    {
+      id: 'REC002',
+      patientId: 'PT001',
+      patientName: 'James Wilson',
+      type: 'Radiology',
+      title: 'Chest X-Ray PA View',
+      date: '2024-03-15',
+      status: 'Final',
+      doctor: 'Dr. Michael Chen',
+      department: 'Radiology',
+      fileSize: '4.5 MB'
+    },
+    {
+      id: 'REC003',
+      patientId: 'PT002',
+      patientName: 'Emma Thompson',
+      type: 'Prescription',
+      title: 'Post-Op Medication Plan',
+      date: '2024-04-25',
+      status: 'Active',
+      doctor: 'Dr. Julian Vane',
+      department: 'General Surgery',
+      fileSize: '0.4 MB'
+    },
+    {
+      id: 'REC004',
+      patientId: 'PT003',
+      patientName: 'Robert Davis',
+      type: 'Laboratory',
+      title: 'Metabolic Panel',
+      date: '2024-04-22',
+      status: 'Pending',
+      doctor: 'Dr. Elena Rodriguez',
+      department: 'Clinical Bio',
+      fileSize: '0.8 MB'
+    }
+  ];
+
+  const appointments = [
+    {
+      id: 'APP001',
+      patientId: 'PT001',
+      patientName: 'James Wilson',
+      doctor: 'Dr. Sarah Wilson',
+      date: '2024-04-28',
+      time: '09:00',
+      duration: 30,
+      type: 'Consultation',
+      status: 'Confirmed'
+    },
+    {
+      id: 'APP002',
+      patientId: 'PT002',
+      patientName: 'Emma Thompson',
+      doctor: 'Dr. Michael Chen',
+      date: '2024-04-28',
+      time: '10:30',
+      duration: 45,
+      type: 'Follow-up',
+      status: 'Confirmed'
+    },
+    {
+      id: 'APP003',
+      patientId: 'PT004',
+      patientName: 'Sophia Martinez',
+      doctor: 'Dr. Sarah Wilson',
+      date: '2024-04-29',
+      time: '14:00',
+      duration: 30,
+      type: 'Examination',
+      status: 'Pending'
+    }
+  ];
+
   // API Routes
+  app.get("/api/appointments", (req, res) => {
+    res.json(appointments);
+  });
+
+  app.post("/api/appointments", (req, res) => {
+    const newAppointment = {
+      ...req.body,
+      id: `APP${String(appointments.length + 1).padStart(3, '0')}`,
+    };
+    appointments.push(newAppointment);
+    res.status(201).json(newAppointment);
+  });
+
+  app.get("/api/records", (req, res) => {
+    const { patientId, type } = req.query;
+    let filtered = [...medicalRecords];
+    
+    if (patientId) filtered = filtered.filter(r => r.patientId === patientId);
+    if (type && type !== 'All') filtered = filtered.filter(r => r.type === type);
+    
+    res.json(filtered);
+  });
   app.get("/api/patients/all", (req, res) => {
     res.json(patients);
   });
