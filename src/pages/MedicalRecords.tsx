@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, FileText, Download, Eye, Calendar, User, Activity, Clock, ShieldCheck, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getMedicalRecords, MedicalRecord } from '../services/recordService';
+import RecordModal from '../components/records/RecordModal';
 
 const recordTypes = ['All', 'Laboratory', 'Radiology', 'Prescription', 'Note'];
 
@@ -11,6 +12,7 @@ export default function MedicalRecords() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
 
   useEffect(() => {
     fetchRecords();
@@ -164,7 +166,10 @@ export default function MedicalRecords() {
                     <Clock className="w-3 h-3" /> UID: {record.id}
                   </div>
                   <div className="flex gap-2">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-100 transition-all">
+                    <button 
+                      onClick={() => setSelectedRecord(record)}
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-100 transition-all"
+                    >
                       <Eye className="w-3.5 h-3.5" /> Preview
                     </button>
                     <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 shadow-md transition-all">
@@ -200,6 +205,11 @@ export default function MedicalRecords() {
         </div>
         <p>MediFlow Archive System v2.4.0</p>
       </div>
+
+      <RecordModal 
+        record={selectedRecord} 
+        onClose={() => setSelectedRecord(null)} 
+      />
     </div>
   );
 }

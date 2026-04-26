@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, MapPin, Phone, Mail, FileText, Activity, Clock, UserPlus, Edit3, Save, RotateCcw, Pill, Trash2, Plus, TrendingUp } from 'lucide-react';
+import { X, Calendar, MapPin, Phone, Mail, FileText, Activity, Clock, UserPlus, Edit3, Save, RotateCcw, Pill, Trash2, Plus, TrendingUp, CalendarCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Patient, updatePatient, Medication } from '../../services/patientService';
+import { addAppointment } from '../../services/appointmentService';
 
 interface PatientModalProps {
   patient: Patient | null;
@@ -20,6 +21,11 @@ export default function PatientModal({ patient, isOpen, onClose, onUpdate }: Pat
   const [newMed, setNewMed] = useState<Partial<Medication>>({ name: '', dosage: '', frequency: '', startDate: new Date().toISOString().split('T')[0] });
   const [showAddMed, setShowAddMed] = useState(false);
 
+  // New scheduling form state
+  const [showScheduleForm, setShowScheduleForm] = useState(false);
+  const [scheduleData, setScheduleData] = useState({ date: '', time: '', type: 'Consultation', doctor: 'Dr. Sarah Wilson' });
+  const [isScheduling, setIsScheduling] = useState(false);
+
   useEffect(() => {
     if (patient) {
       setEditData({
@@ -32,6 +38,7 @@ export default function PatientModal({ patient, isOpen, onClose, onUpdate }: Pat
       });
       setIsEditing(false);
       setShowAddMed(false);
+      setShowScheduleForm(false);
       setNewMed({ name: '', dosage: '', frequency: '', startDate: new Date().toISOString().split('T')[0] });
     }
   }, [patient]);
@@ -49,6 +56,34 @@ export default function PatientModal({ patient, isOpen, onClose, onUpdate }: Pat
       alert("Error saving changes. Please try again.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleScheduleAppointment = async () => {
+    if (!scheduleData.date || !scheduleData.time) {
+      alert('Please fill in both date and time.');
+      return;
+    }
+    setIsScheduling(true);
+    try {
+      await addAppointment({
+        patientId: patient.id,
+        patientName: patient.name,
+        doctor: scheduleData.doctor,
+        date: scheduleData.date,
+        time: scheduleData.time,
+        duration: 30,
+        type: scheduleData.type,
+        status: 'Pending'
+      });
+      setShowScheduleForm(false);
+      setScheduleData({ date: '', time: '', type: 'Consultation', doctor: 'Dr. Sarah Wilson' });
+      alert('Appointment scheduled successfully!');
+    } catch(err) {
+      console.error("Failed to schedule:", err);
+      alert('Failed to schedule appointment.');
+    } finally {
+      setIsScheduling(false);
     }
   };
 
@@ -105,7 +140,7 @@ export default function PatientModal({ patient, isOpen, onClose, onUpdate }: Pat
       {isEditing ? (
         <input
           type={type}
-          value={editData[name] || ''}
+          value={(editData[name] as string | number) || ''}
           onChange={(e) => setEditData(prev => ({ ...prev, [name]: type === 'number' ? parseInt(e.target.value) : e.target.value }))}
           className="w-full bg-slate-50 border border-blue-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
         />
@@ -366,16 +401,79 @@ export default function PatientModal({ patient, isOpen, onClose, onUpdate }: Pat
 
             {/* Footer */}
             {!isEditing && (
-              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-                <button 
-                  onClick={onClose}
-                  className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all"
-                >
-                  Close Profile
-                </button>
-                <button className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-md transition-all flex items-center gap-2">
-                  <FileText className="w-4 h-4" /> Full Medical Report
-                </button>
+              <div className="p-6 bg-slate-50 border-t border-slate-100 flex flex-col gap-4">
+                <AnimatePresence>
+                  {showScheduleForm && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-4">
+                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                          <CalendarCheck className="w-3 h-3" /> Quick Schedule
+                        </h4>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          <input 
+                            type="date"
+                            value={scheduleData.date}
+                            onChange={(e) => setScheduleData(p => ({ ...p, date: e.target.value }))}
+                            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
+                          />
+                          <input 
+                            type="time"
+                            value={scheduleData.time}
+                            onChange={(e) => setScheduleData(p => ({ ...p, time: e.target.value }))}
+                            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
+                          />
+                          <select 
+                            value={scheduleData.type}
+                            onChange={(e) => setScheduleData(p => ({ ...p, type: e.target.value }))}
+                            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
+                          >
+                            <option value="Consultation">Consultation</option>
+                            <option value="Follow-up">Follow-up</option>
+                            <option value="Examination">Examination</option>
+                          </select>
+                          <select 
+                            value={scheduleData.doctor}
+                            onChange={(e) => setScheduleData(p => ({ ...p, doctor: e.target.value }))}
+                            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
+                          >
+                            <option value="Dr. Sarah Wilson">Dr. Sarah Wilson</option>
+                            <option value="Dr. Michael Chen">Dr. Michael Chen</option>
+                            <option value="Dr. Elena Rodriguez">Dr. Elena Rodriguez</option>
+                          </select>
+                        </div>
+                        <div className="flex justify-end gap-2 pt-2">
+                          <button onClick={() => setShowScheduleForm(false)} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 transition-all">Cancel</button>
+                          <button onClick={handleScheduleAppointment} disabled={isScheduling} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 shadow-md transition-all flex items-center gap-2">
+                             {isScheduling ? <Activity className="w-3 h-3 animate-spin" /> : <CalendarCheck className="w-3 h-3" />}
+                             Confirm 
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className="flex justify-end gap-3 w-full">
+                  <button 
+                    onClick={onClose}
+                    className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all"
+                  >
+                    Close Profile
+                  </button>
+                  {!showScheduleForm && (
+                     <button onClick={() => setShowScheduleForm(true)} className="px-6 py-2.5 bg-white border border-blue-200 text-blue-600 rounded-xl text-sm font-bold hover:bg-blue-50 shadow-sm transition-all flex items-center gap-2">
+                       <CalendarCheck className="w-4 h-4" /> Schedule Visit
+                     </button>
+                  )}
+                  <button className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-md transition-all flex items-center gap-2">
+                    <FileText className="w-4 h-4" /> Full Medical Report
+                  </button>
+                </div>
               </div>
             )}
           </motion.div>

@@ -3,6 +3,7 @@ import { Calendar as CalendarIcon, Clock, User, Plus, ChevronLeft, ChevronRight,
 import { motion, AnimatePresence } from 'motion/react';
 import { getAppointments, addAppointment, Appointment } from '../services/appointmentService';
 import { getPatients, Patient } from '../services/patientService';
+import AppointmentModal from '../components/appointments/AppointmentModal';
 
 export default function Appointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -10,6 +11,7 @@ export default function Appointments() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showAddModal, setShowAddModal] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -127,7 +129,8 @@ export default function Appointments() {
                         {dayApps.map(app => (
                           <div 
                             key={app.id} 
-                            className={`text-[9px] font-bold p-1 rounded border shadow-sm truncate flex flex-col gap-0.5
+                            onClick={() => setSelectedAppointment(app)}
+                            className={`cursor-pointer text-[9px] font-bold p-1 rounded border shadow-sm truncate flex flex-col gap-0.5 hover:scale-105 transition-transform
                               ${app.status === 'Confirmed' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-amber-50 text-amber-700 border-amber-100'}
                             `}
                           >
@@ -157,7 +160,11 @@ export default function Appointments() {
                   .filter(a => a.date === new Date().toISOString().split('T')[0])
                   .sort((a, b) => a.time.localeCompare(b.time))
                   .map(app => (
-                    <div key={app.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-start gap-4 group hover:bg-white hover:shadow-lg transition-all">
+                    <div 
+                      key={app.id} 
+                      onClick={() => setSelectedAppointment(app)}
+                      className="cursor-pointer p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-start gap-4 group hover:bg-white hover:shadow-lg transition-all"
+                    >
                       <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex flex-col items-center justify-center text-blue-600">
                         <span className="text-xs font-bold">{app.time}</span>
                         <span className="text-[8px] font-bold uppercase">AM</span>
@@ -278,6 +285,11 @@ export default function Appointments() {
           </div>
         )}
       </AnimatePresence>
+
+      <AppointmentModal 
+        appointment={selectedAppointment} 
+        onClose={() => setSelectedAppointment(null)} 
+      />
     </div>
   );
 }

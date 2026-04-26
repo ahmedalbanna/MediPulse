@@ -147,7 +147,122 @@ async function startServer() {
     }
   ];
 
+  let invoices = [
+    { id: 'INV001', patientId: 'PT001', patientName: 'James Wilson', amount: 450.00, date: '2024-04-10', dueDate: '2024-04-24', status: 'Paid', items: [{ desc: 'Consultation', price: 150 }, { desc: 'Blood Test', price: 300 }] },
+    { id: 'INV002', patientId: 'PT002', patientName: 'Emma Thompson', amount: 1200.00, date: '2024-04-15', dueDate: '2024-04-29', status: 'Pending', items: [{ desc: 'Physical Therapy', price: 200 }, { desc: 'Post-Op Care', price: 1000 }] },
+    { id: 'INV003', patientId: 'PT003', patientName: 'Robert Davis', amount: 3500.00, date: '2024-04-20', dueDate: '2024-05-04', status: 'Overdue', items: [{ desc: 'Emergency Admission', price: 1500 }, { desc: 'ICU Stay (1 day)', price: 2000 }] },
+    { id: 'INV004', patientId: 'PT004', patientName: 'Sophia Martinez', amount: 150.00, date: '2024-04-22', dueDate: '2024-05-06', status: 'Paid', items: [{ desc: 'General Checkup', price: 150 }] },
+    { id: 'INV005', patientId: 'PT005', patientName: 'Michael Chen', amount: 85.00, date: '2024-04-23', dueDate: '2024-05-07', status: 'Pending', items: [{ desc: 'Prescription Renewal', price: 85 }] },
+  ];
+
+  let transactions = [
+    { id: 'TRX001', invoiceId: 'INV001', type: 'Payment', amount: 450.00, method: 'Credit Card', date: '2024-04-11' },
+    { id: 'TRX002', invoiceId: 'INV004', type: 'Payment', amount: 150.00, method: 'Insurance', date: '2024-04-23' },
+  ];
+
+  let users = [
+    { id: 'USR001', name: 'Dr. Sarah Wilson', email: 's.wilson@hospital.com', role: 'Doctor', department: 'Cardiology', status: 'Active', permissions: ['view_patients', 'edit_records', 'prescribe_meds'] },
+    { id: 'USR002', name: 'John Doe', email: 'j.doe@hospital.com', role: 'Admin', department: 'Administration', status: 'Active', permissions: ['all'] },
+    { id: 'USR003', name: 'Nurse Emily Brown', email: 'e.brown@hospital.com', role: 'Nurse', department: 'Emergency', status: 'Active', permissions: ['view_patients', 'update_vitals'] },
+    { id: 'USR004', name: 'James Wilson', email: 'james.w@gmail.com', role: 'Patient', department: 'Outpatient', status: 'Active', permissions: ['view_own_records'] },
+  ];
+
   // API Routes
+  app.get("/api/users", (req, res) => {
+    res.json(users);
+  });
+
+  app.post("/api/users", (req, res) => {
+    const newUser = {
+      ...req.body,
+      id: `USR${String(users.length + 1).padStart(3, '0')}`,
+    };
+    users.push(newUser);
+    res.status(201).json(newUser);
+  });
+
+  app.put("/api/users/:id", (req, res) => {
+    const { id } = req.params;
+    const index = users.findIndex(u => u.id === id);
+    if (index !== -1) {
+      users[index] = { ...users[index], ...req.body };
+      res.json(users[index]);
+    } else {
+      res.status(404).json({ error: "User not found" });
+    }
+  });
+
+  app.delete("/api/users/:id", (req, res) => {
+    const { id } = req.params;
+    users = users.filter(u => u.id !== id);
+    res.status(204).send();
+  });
+
+  // Billing API
+  app.get("/api/billing/invoices", (req, res) => {
+    res.json(invoices);
+  });
+
+  app.post("/api/billing/invoices", (req, res) => {
+    const newInvoice = {
+      ...req.body,
+      id: `INV${String(invoices.length + 1).padStart(3, '0')}`,
+      date: new Date().toISOString().split('T')[0],
+      status: 'Pending'
+    };
+    invoices.push(newInvoice);
+    res.status(201).json(newInvoice);
+  });
+
+  app.put("/api/billing/invoices/:id/pay", (req, res) => {
+    const { id } = req.params;
+    const { method } = req.body;
+    const index = invoices.findIndex(inv => inv.id === id);
+    
+    if (index !== -1) {
+      invoices[index].status = 'Paid';
+      const newTrx = {
+        id: `TRX${String(transactions.length + 1).padStart(3, '0')}`,
+        invoiceId: id,
+        type: 'Payment',
+        amount: invoices[index].amount,
+        method: method || 'Credit Card',
+        date: new Date().toISOString().split('T')[0]
+      };
+      transactions.push(newTrx);
+      res.json({ invoice: invoices[index], transaction: newTrx });
+    } else {
+      res.status(404).json({ error: "Invoice not found" });
+    }
+  });
+
+  app.get("/api/billing/transactions", (req, res) => {
+    res.json(transactions);
+  });
+
+  app.get("/api/billing/stats", (req, res) => {
+    const totalRevenue = transactions.reduce((sum, t) => sum + t.amount, 0);
+    const pendingAmount = invoices.filter(i => i.status === 'Pending').reduce((sum, i) => sum + i.amount, 0);
+    const overdueAmount = invoices.filter(i => i.status === 'Overdue').reduce((sum, i) => sum + i.amount, 0);
+    
+    // Monthly aggregation (simple)
+    const monthlyRevenue = [
+      { month: 'Jan', revenue: 4500 },
+      { month: 'Feb', revenue: 5200 },
+      { month: 'Mar', revenue: 4800 },
+      { month: 'Apr', revenue: totalRevenue }
+    ];
+
+    res.json({
+      totalRevenue,
+      pendingAmount,
+      overdueAmount,
+      monthlyRevenue,
+      invoiceCount: invoices.length,
+      paidCount: invoices.filter(i => i.status === 'Paid').length
+    });
+  });
+
   app.get("/api/appointments", (req, res) => {
     res.json(appointments);
   });
@@ -159,6 +274,29 @@ async function startServer() {
     };
     appointments.push(newAppointment);
     res.status(201).json(newAppointment);
+  });
+
+  app.post("/api/ai-diagnostics", async (req, res) => {
+    const { symptoms } = req.body;
+    try {
+      const response = await fetch("http://185.190.140.93:11434/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "qwen2.5:1.5b",
+          prompt: `You are an AI medical diagnostic assistant. Based on the following symptoms and history: "${symptoms}", provide a concise preliminary diagnostic insight, potential causes, and recommended next steps or tests. You must state clearly that this is not medical advice and a professional consultation is required.`,
+          stream: false
+        })
+      });
+      if (!response.ok) {
+        throw new Error('Ollama API error');
+      }
+      const data = await response.json();
+      res.json({ insight: data.response });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to generate diagnostic insight" });
+    }
   });
 
   app.get("/api/records", (req, res) => {

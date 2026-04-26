@@ -8,6 +8,7 @@ const navItems = [
   { path: '/records', label: 'Medical Records', icon: ClipboardList },
   { path: '/ai-diagnostics', label: 'AI Diagnostics', icon: Activity },
   { path: '/billing', label: 'Finance & Billing', icon: DollarSign },
+  { path: '/settings/users', label: 'User Management', icon: Users },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
