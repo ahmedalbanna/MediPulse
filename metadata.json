@@ -1,0 +1,10 @@
+{
+  "name": "MediPulse Health Hub",
+  "description": "An advanced, secure, and integrated healthcare management system featuring AI-driven insights, multi-branch support, and comprehensive administrative modules.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
+
