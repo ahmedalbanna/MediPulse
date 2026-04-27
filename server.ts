@@ -276,6 +276,29 @@ async function startServer() {
     res.status(201).json(newAppointment);
   });
 
+  app.post("/api/chat", async (req, res) => {
+    const { message, history } = req.body;
+    try {
+      const response = await fetch("http://185.190.140.93:11434/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "qwen2.5:1.5b",
+          prompt: `${history.map((h: any) => `${h.role}: ${h.parts[0].text}`).join("\n")}\nuser: ${message}`,
+          stream: false
+        })
+      });
+      if (!response.ok) {
+        throw new Error('Ollama API error');
+      }
+      const data = await response.json();
+      res.json({ response: data.response });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Failed to communicate with AI" });
+    }
+  });
+
   app.post("/api/ai-diagnostics", async (req, res) => {
     const { symptoms } = req.body;
     try {
