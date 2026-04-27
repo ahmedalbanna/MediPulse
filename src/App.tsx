@@ -9,6 +9,7 @@ import AIDiagnostics from './pages/AIDiagnostics';
 import UserManagement from './pages/settings/UserManagement';
 import Billing from './pages/Billing';
 import Settings from './pages/Settings';
+import HelpSupport from './pages/HelpSupport';
 import AIChatbot from './components/chat/AIChatbot';
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
             <Route path="/billing" element={<Billing />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/settings/users" element={<UserManagement />} />
+            <Route path="/help" element={<HelpSupport />} />
           </Routes>
         </main>
         <AIChatbot />

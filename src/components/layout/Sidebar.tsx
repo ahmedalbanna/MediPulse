@@ -14,12 +14,12 @@ const navItems = [
 
 export default function Sidebar() {
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-slate-200 flex flex-col z-20">
-      <div className="p-6 flex items-center gap-3 border-b border-slate-100">
+    <aside className="fixed left-0 top-0 h-screen w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-20 transition-colors duration-200">
+      <div className="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800">
         <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
           <span className="text-white font-bold text-lg">M</span>
         </div>
-        <span className="text-slate-800 font-bold text-lg tracking-tight">MediFlow Pro</span>
+        <span className="text-slate-800 dark:text-slate-100 font-bold text-lg tracking-tight">MediFlow Pro</span>
       </div>
       
       <nav className="flex-1 py-4 overflow-y-auto">
@@ -31,8 +31,8 @@ export default function Sidebar() {
             className={({ isActive }) =>
               `flex items-center space-x-3 px-6 py-2.5 text-sm font-medium transition-all ${
                 isActive 
-                  ? 'sidebar-active shadow-sm' 
-                  : 'text-slate-600 hover:bg-slate-50'
+                  ? 'sidebar-active shadow-sm dark:bg-blue-900/20' 
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
               }`
             }
           >
@@ -42,12 +42,12 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div className="p-4 border-t border-slate-100">
+      <div className="p-4 border-t border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-200 border border-slate-300"></div>
+          <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></div>
           <div>
-            <div className="text-sm font-bold text-slate-800">Dr. Julian Vane</div>
-            <div className="text-[10px] text-slate-500 uppercase font-semibold">Chief Admin</div>
+            <div className="text-sm font-bold text-slate-800 dark:text-slate-100">Dr. Julian Vane</div>
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Chief Admin</div>
           </div>
         </div>
       </div>
