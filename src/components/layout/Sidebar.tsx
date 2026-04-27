@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Calendar, Activity, ClipboardList, DollarSign, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Activity, ClipboardList, DollarSign } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 const navItems = [
@@ -9,7 +9,6 @@ const navItems = [
   { path: '/ai-diagnostics', label: 'AI Diagnostics', icon: Activity },
   { path: '/billing', label: 'Finance & Billing', icon: DollarSign },
   { path: '/settings/users', label: 'User Management', icon: Users },
-  { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export default function Sidebar() {
@@ -41,16 +40,6 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
-
-      <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600"></div>
-          <div>
-            <div className="text-sm font-bold text-slate-800 dark:text-slate-100">Dr. Julian Vane</div>
-            <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-semibold">Chief Admin</div>
-          </div>
-        </div>
-      </div>
     </aside>
   );
 }

@@ -55,7 +55,7 @@ export default function UserManagement() {
   );
 
   return (
-    <div className="p-8 space-y-8 max-w-[1400px] mx-auto">
+    <div className="p-8 space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-800 tracking-tight flex items-center gap-3">

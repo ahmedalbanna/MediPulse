@@ -65,7 +65,7 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="p-8 pt-24 space-y-8 max-w-[1600px] mx-auto">
+    <div className="p-8 pt-24 space-y-8">
       {/* Title Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
