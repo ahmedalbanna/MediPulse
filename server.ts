@@ -277,7 +277,92 @@ async function startServer() {
     }
   ];
 
+  let integrations = [
+    { 
+      id: 'int1', 
+      name: 'SAP Health Integration', 
+      description: 'مزامنة بيانات المرضى والمستلزمات مع نظام SAP المركزي الخاص بالمستشفى.', 
+      type: 'HIS', 
+      status: 'Active', 
+      lastSync: '2024-04-28T10:30:00Z', 
+      config: { endpoint: 'https://sap.hospital.internal/api' } 
+    },
+    { 
+      id: 'int2', 
+      name: 'Stripe Payment Gateway', 
+      description: 'بوابة دفع دولية لاستقبال مدفوعات البطاقات الائتمانية والمحافظ الرقمية.', 
+      type: 'Payment', 
+      status: 'Active', 
+      lastSync: '2024-04-28T12:00:00Z', 
+      config: { mode: 'live', webhook: 'https://mediflow.com/api/payment/webhook' } 
+    },
+    { 
+      id: 'int3', 
+      name: 'Tawuniya Insurance API', 
+      description: 'التحقق التلقائي من أحقية التأمين وتقديم المطالبات المالية لشركة التعاونية.', 
+      type: 'Insurance', 
+      status: 'Pending', 
+      lastSync: '2024-04-27T09:00:00Z', 
+      config: { apiId: 'TAW-992-X' } 
+    },
+    { 
+      id: 'int4', 
+      name: 'Twilio SMS Service', 
+      description: 'إرسال رسائل تأكيد المواعيد وتذكير المرضى بمواعيد الأدوية عبر SMS.', 
+      type: 'SMS', 
+      status: 'Active', 
+      lastSync: '2024-04-28T14:00:00Z', 
+      config: { sender: 'MediFlow' } 
+    },
+    { 
+      id: 'int5', 
+      name: 'Open API (v1)', 
+      description: 'واجهة برمجية مفتوحة لمطوري الجهات الخارجية لربط تطبيقاتهم مع MediFlow.', 
+      type: 'API', 
+      status: 'Active', 
+      lastSync: null, 
+      config: { rateLimit: '1000req/min' } 
+    }
+  ];
+
   // API Routes
+  app.get("/api/integrations", (req, res) => res.json(integrations));
+  
+  app.patch("/api/integrations/:id", (req, res) => {
+    const { id } = req.params;
+    const index = integrations.findIndex(i => i.id === id);
+    if (index !== -1) {
+      integrations[index] = { ...integrations[index], ...req.body };
+      res.json(integrations[index]);
+    } else {
+      res.status(404).json({ error: "Integration not found" });
+    }
+  });
+
+  app.post("/api/integrations/:id/test", (req, res) => {
+    const { id } = req.params;
+    const item = integrations.find(i => i.id === id);
+    if (item) {
+      // Simulate connection delay
+      setTimeout(() => {
+        res.json({ success: true, message: `Successfully connected to ${item.name}` });
+      }, 500);
+    } else {
+      res.status(404).json({ error: "Integration not found" });
+    }
+  });
+
+  app.get("/api/integrations/docs", (req, res) => {
+    res.json({
+      version: "1.0.0",
+      baseUrl: "https://api.mediflow.com/v1",
+      endpoints: [
+        { path: "/patients", methods: ["GET", "POST"], auth: "ApiKey" },
+        { path: "/appointments", methods: ["GET", "POST", "PATCH"], auth: "ApiKey" },
+        { path: "/billing/webhook", methods: ["POST"], auth: "Secret" }
+      ]
+    });
+  });
   app.get("/api/users", (req, res) => {
     res.json(users);
   });

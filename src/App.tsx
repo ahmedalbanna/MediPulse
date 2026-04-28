@@ -13,6 +13,7 @@ import Pharmacy from './pages/Pharmacy';
 import UserManagement from './pages/settings/UserManagement';
 import Billing from './pages/Billing';
 import Analytics from './pages/Analytics';
+import Integrations from './pages/Integrations';
 import Settings from './pages/Settings';
 import HelpSupport from './pages/HelpSupport';
 import StaffManagement from './pages/hr/StaffManagement';
@@ -38,6 +39,7 @@ export default function App() {
               <Route path="/ai-visit-assistant" element={<AIVisitAssistant />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/analytics" element={<Analytics />} />
+              <Route path="/integrations" element={<Integrations />} />
               <Route path="/inventory" element={<Inventory />} />
               <Route path="/pharmacy" element={<Pharmacy />} />
               <Route path="/hr/staff" element={<StaffManagement />} />

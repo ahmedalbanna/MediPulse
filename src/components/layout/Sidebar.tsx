@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Calendar, Activity, ClipboardList, DollarSign, Briefcase, Clock, CalendarDays, ShieldCheck, Package, Pill, Mic, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Activity, ClipboardList, DollarSign, Briefcase, Clock, CalendarDays, ShieldCheck, Package, Pill, Mic, TrendingUp, Share2 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -13,6 +13,7 @@ const mainNavItems = [
   { path: '/ai-visit-assistant', label: 'مساعد الزيارة الذكي', icon: Mic, roles: ['Admin', 'Doctor'] },
   { path: '/billing', label: 'الفواتير والمالية', icon: DollarSign, roles: ['Admin', 'Receptionist', 'Accountant'] },
   { path: '/analytics', label: 'التقارير والتحليلات', icon: TrendingUp, roles: ['Admin', 'Accountant'] },
+  { path: '/integrations', label: 'تكامل الأنظمة', icon: Share2, roles: ['Admin'] },
 ];
 
 const hrNavItems = [
