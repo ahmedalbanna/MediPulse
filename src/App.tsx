@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { SettingsProvider } from './contexts/SettingsContext';
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import Dashboard from './pages/Dashboard';
@@ -24,36 +25,40 @@ import AIChatbot from './components/chat/AIChatbot';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <div className="bg-[#f8fafc] dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 font-sans">
-          <Sidebar />
-          <Header />
-          <main className="pr-64 min-h-screen transition-all duration-300">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/patients" element={<Patients />} />
-              <Route path="/appointments" element={<Appointments />} />
-              <Route path="/records" element={<MedicalRecords />} />
-              <Route path="/ai-diagnostics" element={<AIDiagnostics />} />
-              <Route path="/ai-visit-assistant" element={<AIVisitAssistant />} />
-              <Route path="/billing" element={<Billing />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/integrations" element={<Integrations />} />
-              <Route path="/inventory" element={<Inventory />} />
-              <Route path="/pharmacy" element={<Pharmacy />} />
-              <Route path="/hr/staff" element={<StaffManagement />} />
-              <Route path="/hr/attendance" element={<Attendance />} />
-              <Route path="/hr/shifts" element={<Shifts />} />
-              <Route path="/hr/leaves" element={<Leaves />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/settings/users" element={<UserManagement />} />
-              <Route path="/help" element={<HelpSupport />} />
-            </Routes>
-          </main>
-          <AIChatbot />
-        </div>
-      </BrowserRouter>
-    </AuthProvider>
+    <SettingsProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <div className="bg-[#f8fafc] dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 font-sans">
+            <Sidebar />
+            <Header />
+            <main className="transition-all duration-300 min-h-screen pt-16 rtl:pr-64 ltr:pl-64">
+              <div className="p-8">
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/patients" element={<Patients />} />
+                  <Route path="/appointments" element={<Appointments />} />
+                  <Route path="/records" element={<MedicalRecords />} />
+                  <Route path="/ai-diagnostics" element={<AIDiagnostics />} />
+                  <Route path="/ai-visit-assistant" element={<AIVisitAssistant />} />
+                  <Route path="/billing" element={<Billing />} />
+                  <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/integrations" element={<Integrations />} />
+                  <Route path="/inventory" element={<Inventory />} />
+                  <Route path="/pharmacy" element={<Pharmacy />} />
+                  <Route path="/hr/staff" element={<StaffManagement />} />
+                  <Route path="/hr/attendance" element={<Attendance />} />
+                  <Route path="/hr/shifts" element={<Shifts />} />
+                  <Route path="/hr/leaves" element={<Leaves />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/settings/users" element={<UserManagement />} />
+                  <Route path="/help" element={<HelpSupport />} />
+                </Routes>
+              </div>
+            </main>
+            <AIChatbot />
+          </div>
+        </BrowserRouter>
+      </AuthProvider>
+    </SettingsProvider>
   );
 }
