@@ -6,6 +6,8 @@ import Patients from './pages/Patients';
 import MedicalRecords from './pages/MedicalRecords';
 import Appointments from './pages/Appointments';
 import AIDiagnostics from './pages/AIDiagnostics';
+import Inventory from './pages/Inventory';
+import Pharmacy from './pages/Pharmacy';
 import UserManagement from './pages/settings/UserManagement';
 import Billing from './pages/Billing';
 import Settings from './pages/Settings';
@@ -30,6 +32,8 @@ export default function App() {
             <Route path="/records" element={<MedicalRecords />} />
             <Route path="/ai-diagnostics" element={<AIDiagnostics />} />
             <Route path="/billing" element={<Billing />} />
+            <Route path="/inventory" element={<Inventory />} />
+            <Route path="/pharmacy" element={<Pharmacy />} />
             <Route path="/hr/staff" element={<StaffManagement />} />
             <Route path="/hr/attendance" element={<Attendance />} />
             <Route path="/hr/shifts" element={<Shifts />} />

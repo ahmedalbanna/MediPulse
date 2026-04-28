@@ -220,6 +220,41 @@ async function startServer() {
     { id: 'LV002', staffId: 'STF001', type: 'Sick', startDate: '2024-04-25', endDate: '2024-04-26', status: 'Completed', reason: 'Flu' },
   ];
 
+  let medications = [
+    { id: '1', name: 'أوميبرازول 20 ملغ', code: 'OMP-020', category: 'معدي ومعوي', type: 'Pill', quantity: 15, minQuantity: 20, price: 45, expiryDate: '2026-12-01', supplierId: 's1' },
+    { id: '2', name: 'باراسيتامول 500 ملغ', code: 'PCM-500', category: 'مسكنات', type: 'Pill', quantity: 500, minQuantity: 100, price: 12, expiryDate: '2027-05-15', supplierId: 's2' },
+    { id: '3', name: 'أموكسيسيلين 500 ملغ', code: 'AMX-500', category: 'مضاد حيوي', type: 'Pill', quantity: 24, minQuantity: 50, price: 85, expiryDate: '2026-08-20', supplierId: 's1' },
+  ];
+
+  let suppliers = [
+    { id: 's1', name: 'شركة الحياة للأدوية', contactName: 'أحمد علي', phone: '+966 50 123 4567', email: 'ahmad@alhayat.com', address: 'الرياض، السعودية', category: 'أدوية' },
+    { id: 's2', name: 'مؤسسة رعاية المستلزمات', contactName: 'سارة محمد', phone: '+966 50 987 6543', email: 'sara@care.com', address: 'جدة، السعودية', category: 'مستلزمات' },
+  ];
+
+  let prescriptions = [
+    {
+      id: 'pr1',
+      patientId: 'PT015',
+      doctorId: 'USR001',
+      date: '2024-04-28',
+      status: 'Pending',
+      items: [
+        { medicationId: '1', dosage: 'مرة واحدة يومياً', quantity: 1, status: 'Pending' },
+        { medicationId: '2', dosage: 'عند اللزوم', quantity: 2, status: 'Pending' },
+      ]
+    },
+    {
+      id: 'pr2',
+      patientId: 'PT016',
+      doctorId: 'USR002',
+      date: '2024-04-27',
+      status: 'Completed',
+      items: [
+        { medicationId: '2', dosage: '3 مرات يومياً', quantity: 1, status: 'Dispensed' },
+      ]
+    }
+  ];
+
   // API Routes
   app.get("/api/users", (req, res) => {
     res.json(users);
@@ -358,6 +393,35 @@ async function startServer() {
     };
     appointments.push(newAppointment);
     res.status(201).json(newAppointment);
+  });
+
+  // Inventory API
+  app.get("/api/inventory/medications", (req, res) => res.json(medications));
+  app.post("/api/inventory/medications", (req, res) => {
+    const newMed = { ...req.body, id: String(medications.length + 1) };
+    medications.push(newMed);
+    res.status(201).json(newMed);
+  });
+  app.get("/api/inventory/suppliers", (req, res) => res.json(suppliers));
+
+  // Pharmacy API
+  app.get("/api/pharmacy/prescriptions", (req, res) => res.json(prescriptions));
+  app.post("/api/pharmacy/dispense/:id", (req, res) => {
+    const { id } = req.params;
+    const index = prescriptions.findIndex(p => p.id === id);
+    if (index !== -1) {
+      prescriptions[index].status = 'Completed';
+      // Basic quantity deduction logic
+      prescriptions[index].items.forEach(item => {
+        const medIndex = medications.findIndex(m => m.id === item.medicationId);
+        if (medIndex !== -1) {
+          medications[medIndex].quantity = Math.max(0, medications[medIndex].quantity - item.quantity);
+        }
+      });
+      res.json(prescriptions[index]);
+    } else {
+      res.status(404).json({ error: "Prescription not found" });
+    }
   });
 
   app.post("/api/chat", async (req, res) => {

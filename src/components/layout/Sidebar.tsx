@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Calendar, Activity, ClipboardList, DollarSign, Briefcase, Clock, CalendarDays, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Activity, ClipboardList, DollarSign, Briefcase, Clock, CalendarDays, ShieldCheck, Package, Pill } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 const mainNavItems = [
@@ -6,6 +6,8 @@ const mainNavItems = [
   { path: '/patients', label: 'ملفات المرضى', icon: Users },
   { path: '/appointments', label: 'المواعيد والزيارات', icon: Calendar },
   { path: '/records', label: 'السجلات الطبية', icon: ClipboardList },
+  { path: '/inventory', label: 'المخزون والمستلزمات', icon: Package },
+  { path: '/pharmacy', label: 'الصيدلية وصرف الأدوية', icon: Pill },
   { path: '/ai-diagnostics', label: 'التشخيص الذكي (AI)', icon: Activity },
   { path: '/billing', label: 'الفواتير والمالية', icon: DollarSign },
 ];
