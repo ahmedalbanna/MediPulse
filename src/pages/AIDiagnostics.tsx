@@ -1,9 +1,12 @@
+import { GoogleGenAI } from "@google/genai";
 import React, { useState } from 'react';
 import { Activity, ShieldAlert, Sparkles, Brain, FileText, ChevronRight, Maximize2, RotateCcw, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import ReactMarkdown from 'react-markdown';
 import { Link } from 'react-router-dom';
 import DiagnosticModal from '../components/diagnostics/DiagnosticModal';
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export default function AIDiagnostics() {
   const [symptoms, setSymptoms] = useState('');
@@ -17,14 +20,24 @@ export default function AIDiagnostics() {
     setInsight('');
     
     try {
-      const response = await fetch('/api/ai-diagnostics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symptoms }),
+      const prompt = `
+        بصفتك مساعد تشخيص طبي ذكي، قم بتحليل الأعراض والنتائج السريرية التالية:
+        "${symptoms}"
+        
+        يرجى تقديم تحليل مفصل يشمل:
+        1. احتمالات التشخيص (Differential Diagnosis).
+        2. الفحوصات الموصى بها.
+        3. العلامات التحذيرية التي تستوجب التدخل العاجل.
+        
+        استخدم لغة طبية دقيقة وباللغة العربية.
+      `;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt
       });
-      if (!response.ok) throw new Error('Network error');
-      const data = await response.json();
-      setInsight(data.insight);
+
+      setInsight(response.text || 'لم يتم استرجاع نتائج.');
     } catch (error) {
       console.error(error);
       setInsight('حدث خطأ أثناء إنشاء التحليل التشخيصي. يرجى المحاولة مرة أخرى.');
