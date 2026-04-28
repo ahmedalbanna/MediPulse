@@ -191,16 +191,24 @@ async function startServer() {
   ];
 
   let invoices = [
-    { id: 'INV001', patientId: 'PT001', patientName: 'James Wilson', amount: 450.00, date: '2024-04-10', dueDate: '2024-04-24', status: 'Paid', items: [{ desc: 'Consultation', price: 150 }, { desc: 'Blood Test', price: 300 }] },
-    { id: 'INV002', patientId: 'PT002', patientName: 'Emma Thompson', amount: 1200.00, date: '2024-04-15', dueDate: '2024-04-29', status: 'Pending', items: [{ desc: 'Physical Therapy', price: 200 }, { desc: 'Post-Op Care', price: 1000 }] },
-    { id: 'INV003', patientId: 'PT003', patientName: 'Robert Davis', amount: 3500.00, date: '2024-04-20', dueDate: '2024-05-04', status: 'Overdue', items: [{ desc: 'Emergency Admission', price: 1500 }, { desc: 'ICU Stay (1 day)', price: 2000 }] },
-    { id: 'INV004', patientId: 'PT004', patientName: 'Sophia Martinez', amount: 150.00, date: '2024-04-22', dueDate: '2024-05-06', status: 'Paid', items: [{ desc: 'General Checkup', price: 150 }] },
-    { id: 'INV005', patientId: 'PT005', patientName: 'Michael Chen', amount: 85.00, date: '2024-04-23', dueDate: '2024-05-07', status: 'Pending', items: [{ desc: 'Prescription Renewal', price: 85 }] },
+    { id: 'INV001', patientId: 'PT015', patientName: 'أحمد محمود', amount: 450.00, discount: 50, total: 400.00, date: '2024-04-10', dueDate: '2024-04-24', status: 'Paid', items: [{ desc: 'Consultation', price: 150 }, { desc: 'Blood Test', price: 300 }] },
+    { id: 'INV002', patientId: 'PT016', patientName: 'سارة خالد', amount: 1200.00, discount: 0, total: 1200.00, date: '2024-04-15', dueDate: '2024-04-29', status: 'Pending', items: [{ desc: 'Physical Therapy', price: 200 }, { desc: 'Post-Op Care', price: 1000 }] },
+    { id: 'INV003', patientId: 'PT017', patientName: 'فهد العتيبي', amount: 3500.00, discount: 500, total: 3000.00, date: '2024-04-20', dueDate: '2024-05-04', status: 'Overdue', items: [{ desc: 'Emergency Admission', price: 1500 }, { desc: 'ICU Stay (1 day)', price: 2000 }] },
   ];
 
   let transactions = [
-    { id: 'TRX001', invoiceId: 'INV001', type: 'Payment', amount: 450.00, method: 'Credit Card', date: '2024-04-11' },
-    { id: 'TRX002', invoiceId: 'INV004', type: 'Payment', amount: 150.00, method: 'Insurance', date: '2024-04-23' },
+    { id: 'TRX001', invoiceId: 'INV001', type: 'Payment', amount: 400.00, method: 'Credit Card', date: '2024-04-11' },
+  ];
+
+  let claims = [
+    { id: 'CLM001', invoiceId: 'INV002', patientName: 'سارة خالد', insuranceProvider: 'Bupa', amount: 1200.00, status: 'Processing', date: '2024-04-15' },
+    { id: 'CLM002', invoiceId: 'INV001', patientName: 'أحمد محمود', insuranceProvider: 'Tawuniya', amount: 400.00, status: 'Approved', date: '2024-04-10' },
+  ];
+
+  let expenses = [
+    { id: 'EXP001', category: 'Supplies', description: 'Medical Gauze and Bandages', amount: 250.00, date: '2024-04-20', status: 'Paid' },
+    { id: 'EXP002', category: 'Utility', description: 'Electricity Bill - April', amount: 1500.00, date: '2024-04-25', status: 'Paid' },
+    { id: 'EXP003', category: 'Maintenance', description: 'MRI Machine Service', amount: 800.00, date: '2024-04-26', status: 'Pending' },
   ];
 
   let users = [
@@ -335,9 +343,11 @@ async function startServer() {
   });
 
   app.post("/api/billing/invoices", (req, res) => {
+    const { amount, discount } = req.body;
     const newInvoice = {
       ...req.body,
       id: `INV${String(invoices.length + 1).padStart(3, '0')}`,
+      total: (amount || 0) - (discount || 0),
       date: new Date().toISOString().split('T')[0],
       status: 'Pending'
     };
@@ -356,7 +366,7 @@ async function startServer() {
         id: `TRX${String(transactions.length + 1).padStart(3, '0')}`,
         invoiceId: id,
         type: 'Payment',
-        amount: invoices[index].amount,
+        amount: invoices[index].total,
         method: method || 'Credit Card',
         date: new Date().toISOString().split('T')[0]
       };
@@ -371,12 +381,25 @@ async function startServer() {
     res.json(transactions);
   });
 
+  app.get("/api/billing/claims", (req, res) => res.json(claims));
+  app.get("/api/billing/expenses", (req, res) => res.json(expenses));
+  app.post("/api/billing/expenses", (req, res) => {
+    const newExpense = {
+      ...req.body,
+      id: `EXP${String(expenses.length + 1).padStart(3, '0')}`,
+      date: new Date().toISOString().split('T')[0]
+    };
+    expenses.push(newExpense);
+    res.status(201).json(newExpense);
+  });
+
   app.get("/api/billing/stats", (req, res) => {
     const totalRevenue = transactions.reduce((sum, t) => sum + t.amount, 0);
-    const pendingAmount = invoices.filter(i => i.status === 'Pending').reduce((sum, i) => sum + i.amount, 0);
-    const overdueAmount = invoices.filter(i => i.status === 'Overdue').reduce((sum, i) => sum + i.amount, 0);
+    const totalExpenses = expenses.filter(e => e.status === 'Paid').reduce((sum, e) => sum + e.amount, 0);
+    const netIncome = totalRevenue - totalExpenses;
+    const pendingAmount = invoices.filter(i => i.status === 'Pending').reduce((sum, i) => sum + i.total, 0);
+    const overdueAmount = invoices.filter(i => i.status === 'Overdue').reduce((sum, i) => sum + i.total, 0);
     
-    // Monthly aggregation (simple)
     const monthlyRevenue = [
       { month: 'Jan', revenue: 4500 },
       { month: 'Feb', revenue: 5200 },
@@ -386,6 +409,8 @@ async function startServer() {
 
     res.json({
       totalRevenue,
+      totalExpenses,
+      netIncome,
       pendingAmount,
       overdueAmount,
       monthlyRevenue,

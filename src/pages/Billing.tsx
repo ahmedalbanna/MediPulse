@@ -1,31 +1,38 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { DollarSign, FileText, TrendingUp, CreditCard, Clock, CheckCircle2, AlertCircle, Plus, Search, Filter, ArrowUpRight, ArrowDownRight, MoreVertical, Download, RotateCcw } from 'lucide-react';
+import { DollarSign, FileText, TrendingUp, CreditCard, Clock, CheckCircle2, AlertCircle, Plus, Search, Filter, ArrowUpRight, ArrowDownRight, MoreVertical, Download, RotateCcw, ShieldCheck, Receipt, Wallet } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { getInvoices, getBillingStats, payInvoice, getTransactions, createInvoice, Invoice, BillingStats, Transaction } from '../services/billingService';
+import { getInvoices, getBillingStats, payInvoice, getTransactions, createInvoice, getClaims, getExpenses, createExpense, Invoice, BillingStats, Transaction, Claim, Expense } from '../services/billingService';
 import { getPatients, Patient } from '../services/patientService';
 
 export default function Billing() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [claims, setClaims] = useState<Claim[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [stats, setStats] = useState<BillingStats | null>(null);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'invoices' | 'transactions'>('invoices');
+  const [activeTab, setActiveTab] = useState<'invoices' | 'transactions' | 'claims' | 'expenses'>('invoices');
   const [showAddInvoice, setShowAddInvoice] = useState(false);
+  const [showAddExpense, setShowAddExpense] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [invData, trxData, statsData, patientsData] = await Promise.all([
+      const [invData, trxData, claimsData, expData, statsData, patientsData] = await Promise.all([
         getInvoices(),
         getTransactions(),
+        getClaims(),
+        getExpenses(),
         getBillingStats(),
         getPatients(1, 100)
       ]);
       setInvoices(invData);
       setTransactions(trxData);
+      setClaims(claimsData);
+      setExpenses(expData);
       setStats(statsData);
       setPatients(patientsData.data);
     } catch (err) {
@@ -78,6 +85,12 @@ export default function Billing() {
             <Download className="w-5 h-5" /> تصدير التقرير
           </button>
           <button 
+            onClick={() => setShowAddExpense(true)}
+            className="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 px-8 py-4 rounded-2xl text-sm font-black hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <ArrowDownRight className="w-5 h-5 text-red-500" /> إضافة مصروفات
+          </button>
+          <button 
             onClick={() => setShowAddInvoice(true)}
             className="flex items-center gap-3 bg-linear-to-r from-emerald-600 to-teal-600 text-white px-8 py-4 rounded-2xl text-sm font-black hover:shadow-2xl hover:shadow-emerald-500/30 transition-all active:scale-95"
           >
@@ -93,10 +106,10 @@ export default function Billing() {
           <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
             <TrendingUp className="w-7 h-7" />
           </div>
-          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 border-r-4 border-emerald-500 pr-3">إجمالي الإيرادات</h3>
-          <p className="text-3xl font-black text-slate-900 dark:text-white font-mono">${stats?.totalRevenue.toLocaleString()}</p>
+          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 border-r-4 border-emerald-500 pr-3">صافي الربح</h3>
+          <p className="text-3xl font-black text-slate-900 dark:text-white font-mono">${stats?.netIncome.toLocaleString()}</p>
           <div className="flex items-center gap-2 text-[10px] font-black text-emerald-600 mt-4">
-            <ArrowUpRight className="w-4 h-4" /> +12.5% عن الشهر الماضي
+            <ArrowUpRight className="w-4 h-4" /> العائد المالي الفعلي
           </div>
         </motion.div>
 
@@ -113,12 +126,12 @@ export default function Billing() {
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800 shadow-xl relative overflow-hidden group">
           <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
-            <AlertCircle className="w-7 h-7" />
+            <ArrowDownRight className="w-7 h-7" />
           </div>
-          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 border-r-4 border-red-500 pr-3">مبالغ متأخرة</h3>
-          <p className="text-3xl font-black text-slate-900 dark:text-white font-mono">${stats?.overdueAmount.toLocaleString()}</p>
-          <div className="flex items-center gap-2 text-[10px] font-black text-red-600 mt-4">
-            تتطلب متابعة فورية
+          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 border-r-4 border-red-500 pr-3">إجمالي المصروفات</h3>
+          <p className="text-3xl font-black text-red-600 dark:text-red-400 font-mono">${stats?.totalExpenses.toLocaleString()}</p>
+          <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 mt-4">
+            تكاليف التشغيل والمشتريات
           </div>
         </motion.div>
 
@@ -229,17 +242,32 @@ export default function Billing() {
               سجل الحركات المالية (Log)
               {activeTab === 'transactions' && <motion.div layoutId="tab-underline-billing" className="absolute bottom-0 left-0 right-0 h-1.5 bg-emerald-600 rounded-full" />}
             </button>
+            <button 
+              onClick={() => setActiveTab('claims')}
+              className={`pb-6 text-md font-black transition-all relative ${activeTab === 'claims' ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              مطالبات التأمين
+              {activeTab === 'claims' && <motion.div layoutId="tab-underline-billing" className="absolute bottom-0 left-0 right-0 h-1.5 bg-emerald-600 rounded-full" />}
+            </button>
+            <button 
+              onClick={() => setActiveTab('expenses')}
+              className={`pb-6 text-md font-black transition-all relative ${activeTab === 'expenses' ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              المصروفات التشغيلية
+              {activeTab === 'expenses' && <motion.div layoutId="tab-underline-billing" className="absolute bottom-0 left-0 right-0 h-1.5 bg-emerald-600 rounded-full" />}
+            </button>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          {activeTab === 'invoices' ? (
+        <div className="overflow-x-auto min-h-[400px]">
+          {activeTab === 'invoices' && (
             <table className="w-full text-right">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-900/50">
                   <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">المعرف والتاريخ</th>
                   <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">المريض / العميل</th>
-                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">المبلغ الإجمالي</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">المبلغ الصافي</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">الخصم</th>
                   <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">تاريخ الاستحقاق</th>
                   <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">الحالة</th>
                   <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">الإجراءات</th>
@@ -257,7 +285,10 @@ export default function Billing() {
                       <div className="text-[11px] text-slate-500 font-bold mt-1">UID: {invoice.patientId}</div>
                     </td>
                     <td className="px-10 py-8">
-                      <div className="text-lg font-black text-slate-900 dark:text-white font-mono">${invoice.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                      <div className="text-lg font-black text-slate-900 dark:text-white font-mono">${invoice.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                    </td>
+                    <td className="px-10 py-8">
+                      <div className="text-xs font-black text-red-500 font-mono">-${invoice.discount.toLocaleString()}</div>
                     </td>
                     <td className="px-10 py-8">
                       <div className="text-xs font-black text-slate-600 dark:text-slate-400">{new Date(invoice.dueDate).toLocaleDateString('ar-EG')}</div>
@@ -292,7 +323,9 @@ export default function Billing() {
                 ))}
               </tbody>
             </table>
-          ) : (
+          )}
+
+          {activeTab === 'transactions' && (
             <table className="w-full text-right">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-900/50">
@@ -337,6 +370,85 @@ export default function Billing() {
               </tbody>
             </table>
           )}
+
+          {activeTab === 'claims' && (
+            <table className="w-full text-right">
+              <thead>
+                <tr className="bg-slate-50/50 dark:bg-slate-900/50">
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">المعرف والتاريخ</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">المريض</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">شركة التأمين</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">المبلغ</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">الحالة</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-900">
+                {claims.map(claim => (
+                  <tr key={claim.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-900/30 transition-colors">
+                    <td className="px-10 py-8">
+                      <div className="text-sm font-black text-slate-800 dark:text-slate-100 font-mono tracking-wider">{claim.id}</div>
+                      <div className="text-[10px] text-slate-400 font-black uppercase mt-1">{new Date(claim.date).toLocaleDateString('ar-EG')}</div>
+                    </td>
+                    <td className="px-10 py-8 text-sm font-black text-slate-800 dark:text-slate-100">{claim.patientName}</td>
+                    <td className="px-10 py-8">
+                      <div className="flex items-center gap-3 text-sm font-bold text-slate-600 dark:text-slate-400">
+                        <ShieldCheck className="w-5 h-5 text-emerald-500" /> {claim.insuranceProvider}
+                      </div>
+                    </td>
+                    <td className="px-10 py-8 text-lg font-black font-mono text-slate-900 dark:text-white">${claim.amount.toLocaleString()}</td>
+                    <td className="px-10 py-8">
+                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase border
+                        ${claim.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                          claim.status === 'Processing' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
+                          claim.status === 'Rejected' ? 'bg-red-50 text-red-600 border-red-100' : 
+                          'bg-slate-50 text-slate-600 border-slate-100'}`}
+                      >
+                        {claim.status === 'Approved' ? 'مقبولة' : claim.status === 'Processing' ? 'قيد المعالجة' : claim.status === 'Rejected' ? 'مرفوضة' : 'محفوظة'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {activeTab === 'expenses' && (
+            <table className="w-full text-right">
+              <thead>
+                <tr className="bg-slate-50/50 dark:bg-slate-900/50">
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">المعرف والتاريخ</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">الفئة</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">الوصف</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">المبلغ</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">الحالة</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-900">
+                {expenses.map(expense => (
+                  <tr key={expense.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-900/30 transition-colors">
+                    <td className="px-10 py-8">
+                      <div className="text-sm font-black text-slate-800 dark:text-slate-100 font-mono tracking-wider">{expense.id}</div>
+                      <div className="text-[10px] text-slate-400 font-black uppercase mt-1">{new Date(expense.date).toLocaleDateString('ar-EG')}</div>
+                    </td>
+                    <td className="px-10 py-8">
+                      <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase">{expense.category}</span>
+                    </td>
+                    <td className="px-10 py-8 text-sm font-bold text-slate-700 dark:text-slate-300">{expense.description}</td>
+                    <td className="px-10 py-8 text-lg font-black font-mono text-red-500">-${expense.amount.toLocaleString()}</td>
+                    <td className="px-10 py-8">
+                      <div className="flex items-center gap-2 text-[10px] font-black uppercase">
+                        {expense.status === 'Paid' ? (
+                          <span className="text-emerald-500 flex items-center gap-1"><CheckCircle2 className="w-4 h-4" /> مدفوع</span>
+                        ) : (
+                          <span className="text-amber-500 flex items-center gap-1"><Clock className="w-4 h-4" /> معلق</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
 
@@ -366,6 +478,7 @@ export default function Billing() {
                   patientId: formData.get('patientId') as string,
                   patientName: selectedPatient?.name || 'Unknown',
                   amount: parseFloat(formData.get('amount') as string),
+                  discount: parseFloat(formData.get('discount') as string) || 0,
                   dueDate: formData.get('dueDate') as string,
                   items: [{ desc: formData.get('desc') as string, price: parseFloat(formData.get('amount') as string) }]
                 });
@@ -394,9 +507,15 @@ export default function Billing() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block border-r-4 border-slate-200 pr-3">تاريخ استحقاق السداد</label>
-                  <input name="dueDate" type="date" required className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-emerald-500/10 outline-none dark:text-white" />
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block border-r-4 border-slate-200 pr-3">مبلغ الخصم ($)</label>
+                    <input name="discount" type="number" step="0.01" min="0" placeholder="0.00" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-emerald-500/10 outline-none dark:text-white" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block border-r-4 border-slate-200 pr-3">تاريخ استحقاق السداد</label>
+                    <input name="dueDate" type="date" required className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-emerald-500/10 outline-none dark:text-white" />
+                  </div>
                 </div>
 
                 <div className="flex gap-4 pt-6">
@@ -405,6 +524,81 @@ export default function Billing() {
                   </button>
                   <button type="submit" className="flex-1 py-4 bg-linear-to-r from-emerald-600 to-teal-600 text-white rounded-[1.5rem] text-sm font-black hover:shadow-2xl hover:shadow-emerald-500/30 transition-all shadow-xl active:scale-95">
                     إصدار الفاتورة
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Expense Modal */}
+      <AnimatePresence>
+        {showAddExpense && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowAddExpense(false)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              className="relative w-full max-w-xl bg-white dark:bg-slate-950 rounded-[3rem] shadow-2xl overflow-hidden p-10 glass border border-white/10"
+            >
+              <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-8 flex items-center gap-4 border-r-8 border-red-600 pr-5">
+                <Receipt className="w-8 h-8 text-red-600" />
+                تسجيل مصروفات جديدة
+              </h2>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.currentTarget);
+                
+                await createExpense({
+                  category: formData.get('category') as string,
+                  description: formData.get('description') as string,
+                  amount: parseFloat(formData.get('amount') as string),
+                  status: formData.get('status') as 'Paid' | 'Pending'
+                });
+                
+                setShowAddExpense(false);
+                fetchData();
+              }} className="space-y-8 text-right">
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block border-r-4 border-slate-200 pr-3">الفئة التصنيفية</label>
+                  <select name="category" required className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-emerald-500/10 outline-none dark:text-white">
+                    <option value="Supplies">مستلزمات طبية</option>
+                    <option value="Utility">فواتير (كهرباء/ماء)</option>
+                    <option value="Maintenance">صيانة دورية</option>
+                    <option value="Salaries">رواتب وأجور</option>
+                    <option value="Other">أخرى</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block border-r-4 border-slate-200 pr-3">وصف المصروفات</label>
+                  <input name="description" placeholder="مثال: شراء شاش ومعقمات" required className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-emerald-500/10 outline-none dark:text-white" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block border-r-4 border-slate-200 pr-3">المبلغ ($)</label>
+                    <input name="amount" type="number" step="0.01" min="0" placeholder="0.00" required className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-emerald-500/10 outline-none dark:text-white" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block border-r-4 border-slate-200 pr-3">حالة السداد</label>
+                    <select name="status" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-emerald-500/10 outline-none dark:text-white">
+                      <option value="Paid">تم الدفع</option>
+                      <option value="Pending">قيد الانتظار</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 pt-6">
+                  <button type="button" onClick={() => setShowAddExpense(false)} className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-[1.5rem] text-sm font-black hover:bg-slate-200 transition-all">
+                    إلغاء
+                  </button>
+                  <button type="submit" className="flex-1 py-4 bg-linear-to-r from-red-600 to-rose-600 text-white rounded-[1.5rem] text-sm font-black hover:shadow-2xl hover:shadow-red-500/30 transition-all shadow-xl active:scale-95">
+                    حفظ المصروفات
                   </button>
                 </div>
               </form>
