@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Clock, User, Plus, ChevronLeft, ChevronRight, MapPin, MoreVertical, CheckCircle2, Clock3 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Calendar as CalendarIcon, Clock, User, Plus, ChevronLeft, ChevronRight, MapPin, MoreVertical, CheckCircle2, Clock3, RotateCcw, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getAppointments, addAppointment, Appointment } from '../services/appointmentService';
 import { getPatients, Patient } from '../services/patientService';
@@ -13,16 +13,12 @@ export default function Appointments() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [apptsData, patientsData] = await Promise.all([
         getAppointments(),
-        getPatients(1, 100) // Get many patients for the dropdown
+        getPatients(1, 100)
       ]);
       setAppointments(apptsData);
       setPatients(patientsData.data);
@@ -31,7 +27,11 @@ export default function Appointments() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const daysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -49,8 +49,8 @@ export default function Appointments() {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
 
-  const monthNames = ["January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+  const monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+    "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
   ];
 
   const getDayAppointments = (day: number) => {
@@ -59,49 +59,51 @@ export default function Appointments() {
   };
 
   return (
-    <div className="p-8 pt-24 space-y-8">
+    <div className="p-8 pt-24 space-y-10 text-right animate-in fade-in duration-700">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800 tracking-tight flex items-center gap-3">
-            <CalendarIcon className="w-8 h-8 text-blue-600" />
-            Scheduling & Calendar
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-4">
+            <div className="p-3 bg-linear-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-xl shadow-blue-500/20">
+              <CalendarIcon className="w-8 h-8 text-white" />
+            </div>
+            جدولة المواعيد والتقويم
           </h1>
-          <p className="text-slate-500 mt-1 font-medium">Manage patient visits, professional consultations, and staff shifts.</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-4 font-bold max-w-2xl">إدارة زيارات المرضى، الاستشارات الطبية الاحترافية، وتوزيع نوبات العمل بكفاءة عالية.</p>
         </div>
         <button 
           onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-700 shadow-md transition-all active:scale-95 shrink-0"
+          className="flex items-center gap-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-2xl text-sm font-black hover:shadow-2xl hover:shadow-blue-500/30 transition-all active:scale-95 shrink-0"
         >
-          <Plus className="w-4 h-4" /> Schedule Visit
+          <Plus className="w-5 h-5" /> جدولة زيارة جديدة
         </button>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
         {/* Calendar Main View */}
-        <div className="xl:col-span-2 space-y-6">
-          <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden card-shadow">
-            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
-              <h2 className="text-xl font-bold text-slate-800">
-                {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-              </h2>
-              <div className="flex items-center gap-2">
-                <button onClick={prevMonth} className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 transition-all">
-                  <ChevronLeft className="w-5 h-5 text-slate-400" />
+        <div className="xl:col-span-2 space-y-8">
+          <div className="glass rounded-[2.5rem] overflow-hidden border border-slate-100 dark:border-slate-800 shadow-xl">
+            <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/20 dark:bg-slate-800/10">
+              <div className="flex items-center gap-4">
+                <button onClick={nextMonth} className="p-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-blue-500 transition-all">
+                  <ChevronRight className="w-5 h-5" />
                 </button>
-                <button onClick={() => setCurrentDate(new Date())} className="px-4 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-all">
-                  Today
-                </button>
-                <button onClick={nextMonth} className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-slate-200 transition-all">
-                  <ChevronRight className="w-5 h-5 text-slate-400" />
+                <div className="text-2xl font-black text-slate-900 dark:text-white min-w-[180px] text-center">
+                  {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                </div>
+                <button onClick={prevMonth} className="p-3 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-blue-500 transition-all">
+                  <ChevronLeft className="w-5 h-5" />
                 </button>
               </div>
+              <button onClick={() => setCurrentDate(new Date())} className="px-6 py-2.5 text-xs font-black text-blue-600 bg-blue-50 dark:bg-blue-900/20 rounded-xl hover:bg-blue-100 transition-all">
+                اليوم
+              </button>
             </div>
 
-            <div className="p-6">
-              <div className="grid grid-cols-7 gap-px bg-slate-100 rounded-2xl overflow-hidden border border-slate-100 text-center">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                  <div key={day} className="bg-slate-50 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <div className="p-8">
+              <div className="grid grid-cols-7 gap-1 bg-slate-100 dark:bg-slate-800 rounded-[2rem] overflow-hidden border border-slate-100 dark:border-slate-800 text-center">
+                {['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'].map(day => (
+                  <div key={day} className="bg-slate-50/50 dark:bg-slate-900/50 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
                     {day}
                   </div>
                 ))}
@@ -119,24 +121,25 @@ export default function Appointments() {
                   return (
                     <div 
                       key={i} 
-                      className={`min-h-[120px] bg-white p-2 border-t border-slate-50 relative group transition-colors hover:bg-slate-50/50 ${!isCurrentMonth ? 'bg-slate-50/30' : ''}`}
+                      className={`min-h-[140px] bg-white dark:bg-slate-950 p-4 border-t border-slate-50 dark:border-slate-900 relative group transition-all hover:bg-slate-50/50 dark:hover:bg-slate-800/10 ${!isCurrentMonth ? 'bg-slate-50/10 dark:bg-slate-900/5 cursor-not-allowed' : 'cursor-pointer'}`}
                     >
-                      <span className={`text-xs font-bold ${isCurrentMonth ? (isToday ? 'bg-blue-600 text-white w-6 h-6 flex items-center justify-center rounded-lg shadow-sm' : 'text-slate-700') : 'text-slate-300'}`}>
+                      <div className={`text-sm font-black mb-3 inline-flex items-center justify-center ${isToday ? 'bg-blue-600 text-white w-8 h-8 rounded-xl shadow-lg shadow-blue-500/20 scale-110' : (isCurrentMonth ? 'text-slate-800 dark:text-slate-200' : 'text-slate-200 dark:text-slate-800')}`}>
                         {isCurrentMonth ? dayNum : ''}
-                      </span>
+                      </div>
                       
-                      <div className="mt-2 space-y-1">
-                        {dayApps.map(app => (
-                          <div 
+                      <div className="space-y-1.5">
+                        {dayApps.map((app, idx) => (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
                             key={app.id} 
-                            onClick={() => setSelectedAppointment(app)}
-                            className={`cursor-pointer text-[9px] font-bold p-1 rounded border shadow-sm truncate flex flex-col gap-0.5 hover:scale-105 transition-transform
-                              ${app.status === 'Confirmed' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-amber-50 text-amber-700 border-amber-100'}
+                            onClick={(e) => { e.stopPropagation(); setSelectedAppointment(app); }}
+                            className={`text-[9px] font-black p-2 rounded-xl border shadow-sm truncate flex flex-col gap-1 hover:scale-[1.03] transition-all hover:shadow-md
+                              ${app.status === 'Confirmed' ? 'bg-blue-50/50 text-blue-700 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50' : 'bg-amber-50/50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/50'}
                             `}
                           >
-                            <span className="opacity-70 text-[8px] uppercase tracking-tighter">{app.time}</span>
-                            {app.patientName}
-                          </div>
+                            <span className="opacity-70 font-mono tracking-widest">{app.time}</span>
+                            <div className="truncate">{app.patientName}</div>
+                          </motion.div>
                         ))}
                       </div>
                     </div>
@@ -148,136 +151,133 @@ export default function Appointments() {
         </div>
 
         {/* Sidebar: Upcoming & Stats */}
-        <div className="space-y-6">
-          <div className="bg-white border border-slate-200 rounded-3xl p-6 card-shadow">
-            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-              <Clock3 className="w-3 h-3" /> Upcoming Today
+        <div className="space-y-8">
+          <div className="glass border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-10 shadow-xl">
+            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8 flex items-center gap-3 border-r-4 border-amber-500 pr-3">
+              <Clock3 className="w-5 h-5 text-amber-500" /> مواعيد اليوم
             </h3>
             
-            <div className="space-y-4">
+            <div className="space-y-6">
               {appointments.filter(a => a.date === new Date().toISOString().split('T')[0]).length > 0 ? (
                 appointments
                   .filter(a => a.date === new Date().toISOString().split('T')[0])
                   .sort((a, b) => a.time.localeCompare(b.time))
-                  .map(app => (
-                    <div 
+                  .map((app, idx) => (
+                    <motion.div 
+                      initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.1 }}
                       key={app.id} 
                       onClick={() => setSelectedAppointment(app)}
-                      className="cursor-pointer p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-start gap-4 group hover:bg-white hover:shadow-lg transition-all"
+                      className="cursor-pointer p-6 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] flex items-start gap-6 group hover:bg-white dark:hover:bg-slate-800 hover:shadow-2xl hover:shadow-black/5 transition-all"
                     >
-                      <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex flex-col items-center justify-center text-blue-600">
-                        <span className="text-xs font-bold">{app.time}</span>
-                        <span className="text-[8px] font-bold uppercase">AM</span>
+                      <div className="w-16 h-16 bg-white dark:bg-slate-950 rounded-2xl shadow-sm flex flex-col items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 border border-slate-100 dark:border-slate-800 group-hover:scale-105 transition-transform">
+                        <span className="text-md font-black">{app.time}</span>
+                        <span className="text-[9px] font-black uppercase">{parseInt(app.time.split(':')[0]) >= 12 ? 'مساءً' : 'صباحاً'}</span>
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-bold text-slate-800">{app.patientName}</h4>
-                          <button className="text-slate-300 hover:text-slate-600"><MoreVertical className="w-4 h-4" /></button>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="text-md font-black text-slate-800 dark:text-slate-100 truncate">{app.patientName}</h4>
+                          <button className="text-slate-300 hover:text-slate-600 transition-colors"><MoreVertical className="w-5 h-5" /></button>
                         </div>
-                        <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1 mt-1">
-                          <User className="w-3 h-3" /> {app.doctor}
+                        <p className="text-xs text-slate-500 font-bold flex items-center gap-2 mt-1">
+                          <User className="w-4 h-4" /> {app.doctor}
                         </p>
-                        <div className="mt-3 flex items-center gap-2">
-                          <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-[9px] font-bold">{app.type}</span>
-                          <span className="flex items-center gap-1 text-[9px] font-bold text-green-500"><CheckCircle2 className="w-3 h-3" /> {app.status}</span>
+                        <div className="mt-4 flex items-center gap-3">
+                          <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-[10px] font-black">{app.type === 'Consultation' ? 'استشارة' : app.type}</span>
+                          <span className="flex items-center gap-1.5 text-[10px] font-black text-emerald-500"><CheckCircle2 className="w-4 h-4" /> {app.status === 'Confirmed' ? 'مؤكد' : app.status}</span>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ))
               ) : (
-                <div className="py-12 text-center">
-                  <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CalendarIcon className="w-8 h-8 text-slate-300" />
+                <div className="py-20 text-center opacity-40">
+                  <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <CalendarIcon className="w-10 h-10 text-slate-400" />
                   </div>
-                  <p className="text-sm font-bold text-slate-400">No appointments for today</p>
+                  <p className="text-md font-black text-slate-500 uppercase tracking-widest">لا توجد مواعيد اليوم</p>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="bg-blue-600 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden group">
-            <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-blue-500/30 rounded-full blur-2xl group-hover:scale-150 transition-transform"></div>
-            <h3 className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mb-4">Weekly Summary</h3>
-            <div className="space-y-4 relative">
+          <motion.div 
+            whileHover={{ scale: 1.02 }}
+            className="bg-linear-to-br from-blue-600 to-indigo-700 rounded-[2.5rem] p-10 text-white shadow-2xl shadow-blue-500/20 relative overflow-hidden group"
+          >
+            <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform"></div>
+            <h3 className="text-[10px] font-black text-blue-100 uppercase tracking-widest mb-6 border-r-4 border-white/30 pr-3">ملخص الأسبوع</h3>
+            <div className="space-y-6 relative">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Total Visits</span>
-                <span className="text-2xl font-bold">42</span>
+                <span className="text-sm font-bold opacity-80">إجمالي الزيارات</span>
+                <span className="text-4xl font-black">42</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Revenue Est.</span>
-                <span className="text-2xl font-bold">$12.4k</span>
+                <span className="text-sm font-bold opacity-80">تقدير الإيرادات</span>
+                <span className="text-4xl font-black">12.4k$</span>
               </div>
-              <div className="pt-4 border-t border-blue-500/30 flex items-center justify-between text-[11px] font-bold">
-                <span>NEW PATIENTS</span>
-                <span className="bg-white/20 px-2 py-0.5 rounded-full">+12%</span>
+              <div className="pt-6 border-t border-white/10 flex items-center justify-between text-[11px] font-black">
+                <span className="flex items-center gap-2 uppercase tracking-widest">نمو المرضى الجدد</span>
+                <span className="bg-emerald-500 px-3 py-1 rounded-full flex items-center gap-1"><TrendingUp className="w-3 h-3" /> +12%</span>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
       {/* Add Appointment Modal */}
       <AnimatePresence>
         {showAddModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowAddModal(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
             />
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              initial={{ scale: 0.9, opacity: 0, y: 30 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden p-8"
+              exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              className="relative w-full max-w-xl bg-white dark:bg-slate-950 rounded-[3rem] shadow-2xl overflow-hidden p-10 glass border border-white/10"
             >
-              <h2 className="text-2xl font-bold text-slate-800 mb-6">Schedule New Appointment</h2>
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                // Basic mock submission for now
-                setShowAddModal(false);
-                fetchData();
-              }} className="space-y-6">
+              <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-8 border-r-8 border-blue-600 pr-5">جدولة موعد جديد</h2>
+              <form onSubmit={(e) => { e.preventDefault(); setShowAddModal(false); fetchData(); }} className="space-y-8 text-right">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Patient Selection</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none">
-                    <option value="">Select a patient...</option>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block border-r-4 border-slate-300 pr-3">اختيار المريض</label>
+                  <select className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-blue-500/10 outline-none dark:text-white">
+                    <option value="">اختر مريضاً من القائمة...</option>
                     {patients.map(p => (
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}
                   </select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Date</label>
-                    <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none" />
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block border-r-4 border-slate-300 pr-3">التاريخ</label>
+                    <input type="date" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-blue-500/10 outline-none dark:text-white" />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Time</label>
-                    <input type="time" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500/20 outline-none" />
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block border-r-4 border-slate-300 pr-3">الوقت</label>
+                    <input type="time" className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-blue-500/10 outline-none dark:text-white" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Visit Type</label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {['Consultation', 'Follow-up', 'Examination'].map(type => (
-                      <button key={type} type="button" className="py-2.5 px-2 bg-slate-50 border border-slate-200 rounded-xl text-[10px] font-bold text-slate-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition-all">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block border-r-4 border-slate-300 pr-3">نوع الزيارة</label>
+                  <div className="grid grid-cols-3 gap-4">
+                    {['استشارة', 'متابعة', 'فحص دوري'].map(type => (
+                      <button key={type} type="button" className="py-4 px-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[11px] font-black text-slate-600 dark:text-slate-400 hover:bg-blue-600 hover:border-blue-600 hover:text-white transition-all shadow-sm">
                         {type}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="flex gap-4 pt-6">
-                  <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
-                    Cancel
+                <div className="flex gap-4 pt-8">
+                  <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-2xl text-sm font-black hover:bg-slate-200 transition-all">
+                    إلغاء
                   </button>
-                  <button type="submit" className="flex-1 py-3 bg-blue-600 text-white rounded-2xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all">
-                    Confirm Visit
+                  <button type="submit" className="flex-1 py-4 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-2xl text-sm font-black hover:shadow-2xl hover:shadow-blue-500/30 transition-all shadow-lg active:scale-95">
+                    تأكيد الموعد
                   </button>
                 </div>
               </form>

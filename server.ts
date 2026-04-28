@@ -15,49 +15,80 @@ async function startServer() {
   // Mock API Data
   const patients = [
     { 
-      id: 'PT001', name: 'James Wilson', email: 'j.wilson@email.com', age: 45, gender: 'Male', lastVisit: '2024-04-20', status: 'Stable', contact: '+1 234-567-8901',
-      address: '123 Maple St, Springfield',
+      id: 'PT015', name: 'أحمد محمود', email: 'ahmed.m@email.com', age: 38, gender: 'Male', lastVisit: '2024-04-20', status: 'Stable', contact: '0501234567',
+      address: 'حي النرجس، الرياض',
       history: [
-        { date: '2024-04-20', status: 'Stable', note: 'Routine checkup. All vitals normal.' },
-        { date: '2024-03-15', status: 'Recovering', note: 'Post-op review. Incision healing well.' }
+        { date: '2024-04-20', status: 'Stable', note: 'فحص دوري. المؤشرات الحيوية طبيعية.' },
+        { date: '2024-03-10', status: 'Recovering', note: 'تحسن ملحوظ بعد العملية الجراحية.' }
       ],
-      notes: ['Patient is allergic to Penicillin.', 'Prefers morning appointments.'],
+      notes: ['حساسية من البنسلين.', 'يفضل المواعيد المسائية.'],
       medications: [
-        { id: 'm1', name: 'Lisinopril', dosage: '10mg', frequency: 'Once daily', startDate: '2023-01-15' }
+        { id: 'm1', name: 'أملوديبين', dosage: '5mg', frequency: 'مرة يومياً', startDate: '2024-01-15' }
+      ],
+      diagnoses: [
+        { id: 'd1', date: '2024-01-15', condition: 'ارتفاع ضغط الدم الأولي', doctor: 'د. أحمد البنا', notes: 'يجب البدء في برنامج حمية غذائية.' }
+      ],
+      labResults: [
+        { id: 'l1', date: '2024-04-18', testName: 'فحص الكوليسترول', result: '180 mg/dL', status: 'Normal' }
+      ],
+      treatmentPlans: [
+        { id: 'tp1', startDate: '2024-01-20', goal: 'خفض الوزن وتحسين الضغط', steps: ['رياضة 30 دقيقة', 'تقليل الملح'], status: 'Active' }
       ]
     },
     { 
-      id: 'PT002', name: 'Emma Thompson', email: 'emma.t@email.com', age: 29, gender: 'Female', lastVisit: '2024-04-25', status: 'Recovering', contact: '+1 234-567-8902',
-      address: '456 Oak Ln, Riverton',
+      id: 'PT016', name: 'سارة خالد', email: 'sara.k@email.com', age: 25, gender: 'Female', lastVisit: '2024-04-25', status: 'Recovering', contact: '0559876543',
+      address: 'دبي ماربيا، حي الصفوح',
       history: [
-        { date: '2024-04-25', status: 'Recovering', note: 'Physical therapy session.' }
+        { date: '2024-04-25', status: 'Recovering', note: 'جلسة علاج طبيعي ناجحة.' }
       ],
-      notes: ['Requires assistance with mobility.'],
+      notes: ['تحتاج لمساعدة في الحركة.'],
       medications: [
-        { id: 'm2', name: 'Ibuprofen', dosage: '400mg', frequency: 'As needed for pain', startDate: '2024-04-10' },
-        { id: 'm3', name: 'Amoxicillin', dosage: '500mg', frequency: 'Twice daily', startDate: '2024-04-20' }
+        { id: 'm2', name: 'بانادول اكسترا', dosage: '500mg', frequency: 'عند اللزوم', startDate: '2024-04-10' }
+      ],
+      labResults: [],
+      diagnoses: [
+        { id: 'd2', date: '2024-04-10', condition: 'إجهاد عضلي بسيط', doctor: 'د. سارة عثمان', notes: 'الراحة التامة لمدة 3 أيام.' }
+      ],
+      treatmentPlans: []
+    },
+    {
+      id: 'PT017', name: 'فهد العتيبي', email: 'fahad.o@email.com', age: 52, gender: 'Male', lastVisit: '2024-04-18', status: 'Critical', contact: '0543322110',
+      address: 'جدة، حي السامر',
+      history: [
+        { date: '2024-04-18', status: 'Critical', note: 'دخول طوارئ بسبب ضيق تنفس.' }
+      ],
+      notes: ['مدخن سابق.'],
+      medications: [
+        { id: 'm4', name: 'فينتولين بخاخ', dosage: '100mcg', frequency: 'عند اللزوم', startDate: '2024-04-18' }
+      ],
+      diagnoses: [
+        { id: 'd3', date: '2024-04-18', condition: 'أزمة ربو حادة', doctor: 'د. فيصل العمر', notes: 'تحت الملاحظة الشديدة.' }
+      ],
+      labResults: [
+        { id: 'l2', date: '2024-04-18', testName: 'غازات الدم', result: 'Abnormal', status: 'Pending' }
+      ],
+      treatmentPlans: [
+        { id: 'tp2', startDate: '2024-04-18', goal: 'استقرار الحالة التنفسية', steps: ['الأكسجين المستمر', 'جلسات البخار'], status: 'Active' }
       ]
     },
-    { 
-      id: 'PT003', name: 'Robert Davis', email: 'r.davis@email.com', age: 72, gender: 'Male', lastVisit: '2024-04-22', status: 'Critical', contact: '+1 234-567-8903',
-      address: '789 Pine Rd, Hilltop',
+    {
+      id: 'PT018', name: 'ليلى الأحمد', email: 'laila.a@email.com', age: 41, gender: 'Female', lastVisit: '2024-04-22', status: 'Stable', contact: '0567788990',
+      address: 'الكويت، منطقة بيان',
       history: [
-        { date: '2024-04-22', status: 'Critical', note: 'Admitted with respiratory distress.' }
+        { date: '2024-04-22', status: 'Stable', note: 'فحص ما بعد الولادة.' }
       ],
-      notes: ['History of cardiac issues.'],
-      medications: []
-    },
-    { id: 'PT004', name: 'Sophia Martinez', email: 's.martinez@email.com', age: 34, gender: 'Female', lastVisit: '2024-04-24', status: 'Stable', contact: '+1 234-567-8904' },
-    { id: 'PT005', name: 'Michael Chen', email: 'm.chen@email.com', age: 51, gender: 'Male', lastVisit: '2024-04-19', status: 'Stable', contact: '+1 234-567-8905' },
-    { id: 'PT006', name: 'Sarah Miller', email: 's.miller@email.com', age: 42, gender: 'Female', lastVisit: '2024-04-26', status: 'Recovering', contact: '+1 234-567-8906' },
-    { id: 'PT007', name: 'David Jones', email: 'd.jones@email.com', age: 65, gender: 'Male', lastVisit: '2024-04-21', status: 'Critical', contact: '+1 234-567-8907' },
-    { id: 'PT008', name: 'Olivia Brown', email: 'o.brown@email.com', age: 27, gender: 'Female', lastVisit: '2024-04-23', status: 'Stable', contact: '+1 234-567-8908' },
-    { id: 'PT009', name: 'William Garcia', email: 'w.garcia@email.com', age: 58, gender: 'Male', lastVisit: '2024-04-18', status: 'Stable', contact: '+1 234-567-8909' },
-    { id: 'PT010', name: 'Isabella Lee', email: 'i.lee@email.com', age: 39, gender: 'Female', lastVisit: '2024-04-26', status: 'Recovering', contact: '+1 234-567-8910' },
-    { id: 'PT011', name: 'Lucas White', email: 'l.white@email.com', age: 48, gender: 'Male', lastVisit: '2024-04-15', status: 'Stable', contact: '+1 234-567-8911' },
-    { id: 'PT012', name: 'Mia Anderson', email: 'm.anderson@email.com', age: 31, gender: 'Female', lastVisit: '2024-04-17', status: 'Stable', contact: '+1 234-567-8912' },
-    { id: 'PT013', name: 'Ethan Taylor', email: 'e.taylor@email.com', age: 52, gender: 'Male', lastVisit: '2024-04-14', status: 'Stable', contact: '+1 234-567-8913' },
-    { id: 'PT014', name: 'Charlotte Moore', email: 'c.moore@email.com', age: 36, gender: 'Female', lastVisit: '2024-04-12', status: 'Recovering', contact: '+1 234-567-8914' },
+      notes: [],
+      medications: [
+        { id: 'm5', name: 'حديد وفيتامينات', dosage: '1 Tab', frequency: 'مرة يومياً', startDate: '2024-04-22' }
+      ],
+      diagnoses: [
+        { id: 'd4', date: '2024-04-22', condition: 'فحص دوري بعد الولادة', doctor: 'د. منيرة الجاسم', notes: 'الحالة جيدة جداً.' }
+      ],
+      labResults: [
+        { id: 'l3', date: '2024-04-22', testName: 'CBC Result', result: 'Normal', status: 'Normal' }
+      ],
+      treatmentPlans: []
+    }
   ];
 
   let medicalRecords = [
@@ -167,9 +198,62 @@ async function startServer() {
     { id: 'USR004', name: 'James Wilson', email: 'james.w@gmail.com', role: 'Patient', department: 'Outpatient', status: 'Active', permissions: ['view_own_records'] },
   ];
 
+  let staff = [
+    { id: 'STF001', userId: 'USR001', name: 'Dr. Sarah Wilson', role: 'Doctor', specialization: 'Cardiology', joinDate: '2023-01-10', salary: 12000, status: 'Active' },
+    { id: 'STF002', userId: 'USR003', name: 'Nurse Emily Brown', role: 'Nurse', specialization: 'Emergency Care', joinDate: '2023-03-15', salary: 6000, status: 'Active' },
+    { id: 'STF003', userId: 'USR002', name: 'John Doe', role: 'HR Manager', specialization: 'Administration', joinDate: '2022-06-01', salary: 8000, status: 'Active' },
+  ];
+
+  let attendance = [
+    { id: 'ATT001', staffId: 'STF001', date: '2024-04-28', checkIn: '08:00', checkOut: '16:00', status: 'Present' },
+    { id: 'ATT002', staffId: 'STF002', date: '2024-04-28', checkIn: '07:55', checkOut: '15:45', status: 'Present' },
+  ];
+
+  let shifts = [
+    { id: 'SHF001', staffId: 'STF001', day: 'Monday', startTime: '08:00', endTime: '16:00', room: 'C102' },
+    { id: 'SHF002', staffId: 'STF002', day: 'Monday', startTime: '07:00', endTime: '15:00', room: 'ER-1' },
+    { id: 'SHF003', staffId: 'STF001', day: 'Tuesday', startTime: '08:00', endTime: '16:00', room: 'C102' },
+  ];
+
+  let leaves = [
+    { id: 'LV001', staffId: 'STF002', type: 'Annual', startDate: '2024-05-01', endDate: '2024-05-05', status: 'Approved', reason: 'Vacation' },
+    { id: 'LV002', staffId: 'STF001', type: 'Sick', startDate: '2024-04-25', endDate: '2024-04-26', status: 'Completed', reason: 'Flu' },
+  ];
+
   // API Routes
   app.get("/api/users", (req, res) => {
     res.json(users);
+  });
+
+  // HR API
+  app.get("/api/hr/staff", (req, res) => res.json(staff));
+  app.post("/api/hr/staff", (req, res) => {
+    const newStaff = { ...req.body, id: `STF${String(staff.length + 1).padStart(3, '0')}` };
+    staff.push(newStaff);
+    res.status(201).json(newStaff);
+  });
+
+  app.get("/api/hr/attendance", (req, res) => res.json(attendance));
+  app.post("/api/hr/attendance/check-in", (req, res) => {
+    const { staffId } = req.body;
+    const newEntry = {
+      id: `ATT${String(attendance.length + 1).padStart(3, '0')}`,
+      staffId,
+      date: new Date().toISOString().split('T')[0],
+      checkIn: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      checkOut: null,
+      status: 'Present'
+    };
+    attendance.push(newEntry);
+    res.status(201).json(newEntry);
+  });
+
+  app.get("/api/hr/shifts", (req, res) => res.json(shifts));
+  app.get("/api/hr/leaves", (req, res) => res.json(leaves));
+  app.post("/api/hr/leaves", (req, res) => {
+    const newLeave = { ...req.body, id: `LV${String(leaves.length + 1).padStart(3, '0')}`, status: 'Pending' };
+    leaves.push(newLeave);
+    res.status(201).json(newLeave);
   });
 
   app.post("/api/users", (req, res) => {

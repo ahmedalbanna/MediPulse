@@ -1,6 +1,6 @@
 {
-  "name": "MediPulse Health Hub",
-  "description": "An advanced, secure, and integrated healthcare management system featuring AI-driven insights, multi-branch support, and comprehensive administrative modules.",
+  "name": "MediFlow Pro - النظام الطبي المتكامل",
+  "description": "نظام خارق لإدارة المستشفيات والمراكز الطبية بتجربة مستخدم فاخرة، يشمل إدارة المرضى، التشخيص بالذكاء الاصطناعي، والتقارير الطبية المتقدمة.",
   "requestFramePermissions": [
     "camera",
     "microphone",

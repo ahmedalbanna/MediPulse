@@ -1,45 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, MapPin, Phone, Mail, FileText, Activity, Clock, UserPlus, Edit3, Save, RotateCcw, Pill, Trash2, Plus, TrendingUp, CalendarCheck } from 'lucide-react';
+import { CheckCircle, Download, X, Calendar, MapPin, Phone, Mail, FileText, Activity, Clock, UserPlus, Edit3, Save, RotateCcw, Pill, Trash2, Plus, TrendingUp, CalendarCheck, Shield, Microscope, ClipboardList, Thermometer, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Patient, updatePatient, Medication } from '../../services/patientService';
+import { Patient, updatePatient, Medication, Diagnosis, LabResult, TreatmentPlan } from '../../services/patientService';
 import { addAppointment } from '../../services/appointmentService';
 
 interface PatientModalProps {
   patient: Patient | null;
   isOpen: boolean;
   onClose: () => void;
-  onUpdate?: (updatedPatient: Patient) => void;
+  onUpdate?: () => void;
 }
 
+type TabType = 'info' | 'visits' | 'clinical' | 'meds' | 'labs';
+
 export default function PatientModal({ patient, isOpen, onClose, onUpdate }: PatientModalProps) {
+  const [activeTab, setActiveTab] = useState<TabType>('info');
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<Patient>>({});
   const [isSaving, setIsSaving] = useState(false);
 
-  // New medication form state
-  const [newMed, setNewMed] = useState<Partial<Medication>>({ name: '', dosage: '', frequency: '', startDate: new Date().toISOString().split('T')[0] });
-  const [showAddMed, setShowAddMed] = useState(false);
-
-  // New scheduling form state
-  const [showScheduleForm, setShowScheduleForm] = useState(false);
-  const [scheduleData, setScheduleData] = useState({ date: '', time: '', type: 'Consultation', doctor: 'Dr. Sarah Wilson' });
-  const [isScheduling, setIsScheduling] = useState(false);
-
   useEffect(() => {
     if (patient) {
-      setEditData({
-        name: patient.name,
-        age: patient.age,
-        email: patient.email,
-        contact: patient.contact,
-        address: patient.address,
-        medications: patient.medications ? [...patient.medications] : [],
-      });
+      setEditData({ ...patient });
       setIsEditing(false);
-      setShowAddMed(false);
-      setShowScheduleForm(false);
-      setNewMed({ name: '', dosage: '', frequency: '', startDate: new Date().toISOString().split('T')[0] });
+      setActiveTab('info');
     }
   }, [patient]);
 
@@ -48,434 +33,318 @@ export default function PatientModal({ patient, isOpen, onClose, onUpdate }: Pat
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const updated = await updatePatient(patient.id, editData);
-      if (onUpdate) onUpdate(updated);
+      await updatePatient(patient.id, editData);
+      if (onUpdate) onUpdate();
       setIsEditing(false);
     } catch (error) {
       console.error("Failed to save patient changes:", error);
-      alert("Error saving changes. Please try again.");
+      alert("خطأ في حفظ البيانات. حاول مرة أخرى.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleScheduleAppointment = async () => {
-    if (!scheduleData.date || !scheduleData.time) {
-      alert('Please fill in both date and time.');
-      return;
-    }
-    setIsScheduling(true);
-    try {
-      await addAppointment({
-        patientId: patient.id,
-        patientName: patient.name,
-        doctor: scheduleData.doctor,
-        date: scheduleData.date,
-        time: scheduleData.time,
-        duration: 30,
-        type: scheduleData.type,
-        status: 'Pending'
-      });
-      setShowScheduleForm(false);
-      setScheduleData({ date: '', time: '', type: 'Consultation', doctor: 'Dr. Sarah Wilson' });
-      alert('Appointment scheduled successfully!');
-    } catch(err) {
-      console.error("Failed to schedule:", err);
-      alert('Failed to schedule appointment.');
-    } finally {
-      setIsScheduling(false);
-    }
+  const statusMap: Record<string, { label: string, color: string }> = {
+    'Critical': { label: 'حرج', color: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30' },
+    'Stable': { label: 'مستقر', color: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30' },
+    'Recovering': { label: 'قيد التعافي', color: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30' },
   };
 
-  const handleAddMedication = () => {
-    if (!newMed.name || !newMed.dosage || !newMed.frequency) return;
-    
-    const med: Medication = {
-      id: `m${Date.now()}`,
-      name: newMed.name as string,
-      dosage: newMed.dosage as string,
-      frequency: newMed.frequency as string,
-      startDate: newMed.startDate as string,
-    };
-
-    setEditData(prev => ({
-      ...prev,
-      medications: [...(prev.medications || []), med]
-    }));
-    
-    setNewMed({ name: '', dosage: '', frequency: '', startDate: new Date().toISOString().split('T')[0] });
-    setShowAddMed(false);
-  };
-
-  const handleRemoveMedication = (id: string) => {
-    setEditData(prev => ({
-      ...prev,
-      medications: (prev.medications || []).filter(m => m.id !== id)
-    }));
-  };
-
-  const statusColors = {
-    'Critical': 'bg-red-100 text-red-700 border-red-200',
-    'Stable': 'bg-green-100 text-green-700 border-green-200',
-    'Recovering': 'bg-blue-100 text-blue-700 border-blue-200',
-  };
-
-  const EditableField = ({ 
-    label, 
-    value, 
-    name, 
-    icon: Icon, 
-    type = "text" 
-  }: { 
-    label: string, 
-    value: any, 
-    name: keyof Patient, 
-    icon: any, 
-    type?: string 
-  }) => (
-    <div className="space-y-1 group">
-      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-        <Icon className="w-3 h-3" /> {label}
-      </div>
-      {isEditing ? (
-        <input
-          type={type}
-          value={(editData[name] as string | number) || ''}
-          onChange={(e) => setEditData(prev => ({ ...prev, [name]: type === 'number' ? parseInt(e.target.value) : e.target.value }))}
-          className="w-full bg-slate-50 border border-blue-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
-        />
-      ) : (
-        <div className="text-sm text-slate-600 flex items-center gap-2 group-hover:text-slate-900 transition-colors">
-          {value || <span className="text-slate-300 italic">Not provided</span>}
-        </div>
-      )}
-    </div>
-  );
+  const tabs: { id: TabType, label: string, icon: any }[] = [
+    { id: 'info', label: 'معلومات الحساب', icon: User },
+    { id: 'visits', label: 'السجلات والزيارات', icon: Clock },
+    { id: 'clinical', label: 'التشخيص والخطة', icon: ClipboardList },
+    { id: 'meds', label: 'الوصفات الطبية', icon: Pill },
+    { id: 'labs', label: 'المختبر والأشعة', icon: Microscope },
+  ];
 
   return (
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-          />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" />
           
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.9, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden card-shadow"
+            exit={{ opacity: 0, scale: 0.9, y: 30 }}
+            className="relative w-full max-w-5xl bg-white dark:bg-slate-950 rounded-[2.5rem] shadow-2xl overflow-hidden glass border border-white/20"
           >
-            {/* Header */}
-            <div className={`p-6 flex items-start justify-between bg-slate-50/50 border-b border-slate-100`}>
-              <div className="flex gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-2xl font-bold text-slate-400 shadow-sm overflow-hidden">
-                  {patient.name.split(' ').map(n => n[0]).join('')}
+            {/* Header Area */}
+            <div className="p-8 pb-4 flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-6 text-right">
+                <div className="w-24 h-24 rounded-3xl bg-linear-to-br from-blue-600 to-indigo-700 p-1 shadow-2xl shadow-blue-500/20">
+                  <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[1.4rem] flex items-center justify-center text-3xl font-black text-blue-600">
+                    {patient.name.split(' ').map(n => n[0]).join('')}
+                  </div>
                 </div>
                 <div>
-                  {isEditing ? (
-                    <input
-                      value={editData.name || ''}
-                      onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
-                      className="text-2xl font-bold text-slate-800 bg-white border border-blue-200 rounded-lg px-2 outline-none focus:ring-2 focus:ring-blue-500/20"
-                    />
-                  ) : (
-                    <h2 className="text-2xl font-bold text-slate-800">{patient.name}</h2>
-                  )}
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-sm font-mono text-slate-400 font-bold uppercase tracking-wider">{patient.id}</span>
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold border ${statusColors[patient.status]}`}>
-                      {patient.status}
+                  <div className="flex items-center gap-3 mb-1">
+                    <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{patient.name}</h2>
+                    <span className={`px-4 py-1 rounded-full text-[10px] font-black border ${statusMap[patient.status]?.color}`}>
+                      {statusMap[patient.status]?.label}
                     </span>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm font-bold text-slate-500">
+                    <span className="font-mono text-blue-500 tracking-widest">ID: {patient.id}</span>
+                    <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
+                    <span>{patient.age} سنة</span>
+                    <span className="w-1.5 h-1.5 bg-slate-300 rounded-full"></span>
+                    <span>{patient.gender === 'Male' ? 'ذكر' : 'أنثى'}</span>
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2">
+
+              <div className="flex gap-3">
                 {!isEditing ? (
-                  <button 
-                    onClick={() => setIsEditing(true)}
-                    className="p-2 bg-white rounded-xl border border-slate-200 text-blue-600 hover:text-blue-700 hover:bg-slate-50 transition-all flex items-center gap-2 px-4"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                    <span className="text-sm font-bold">Edit Profile</span>
+                  <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-6 py-3 rounded-2xl text-sm font-bold text-blue-600 hover:bg-blue-50 transition-all shadow-sm">
+                    <Edit3 className="w-4 h-4" /> تعديل البيانات
                   </button>
                 ) : (
-                  <>
-                    <button 
-                      onClick={() => setIsEditing(false)}
-                      className="p-2 bg-white rounded-xl border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all px-4 flex items-center gap-2"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      <span className="text-sm font-bold">Cancel</span>
+                  <div className="flex gap-2">
+                    <button onClick={() => setIsEditing(false)} className="px-6 py-3 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-2xl text-sm font-bold hover:bg-slate-200 transition-all">إلغاء</button>
+                    <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2 bg-blue-600 px-6 py-3 rounded-2xl text-sm font-bold text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20">
+                      {isSaving ? <RotateCcw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} حفظ التغييرات
                     </button>
-                    <button 
-                      onClick={handleSave}
-                      disabled={isSaving}
-                      className="p-2 bg-blue-600 rounded-xl text-white hover:bg-blue-700 transition-all px-4 flex items-center gap-2 shadow-sm disabled:opacity-50"
-                    >
-                      {isSaving ? <Activity className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      <span className="text-sm font-bold">Save</span>
-                    </button>
-                  </>
+                  </div>
                 )}
-                <button 
-                  onClick={onClose}
-                  className="p-2 bg-white rounded-xl border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
-                >
-                  <X className="w-5 h-5" />
+                <button onClick={onClose} className="p-3 bg-slate-50 dark:bg-slate-900 text-slate-400 hover:text-red-500 rounded-2xl transition-all border border-transparent hover:border-red-100/20">
+                  <X className="w-6 h-6" />
                 </button>
               </div>
             </div>
 
-            {/* Content */}
-            <div className="p-8 max-h-[70vh] overflow-y-auto space-y-8">
-              {/* Info Grid */}
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-6">
-                  <EditableField label="Age (Years)" value={patient.age} name="age" icon={Calendar} type="number" />
-                  <EditableField label="Email Address" value={patient.email} name="email" icon={Mail} />
-                  <EditableField label="Contact Number" value={patient.contact} name="contact" icon={Phone} />
-                  <EditableField label="Residential Address" value={patient.address} name="address" icon={MapPin} />
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <Activity className="w-3 h-3" /> Special Notes
-                  </h3>
-                  <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 min-h-[120px]">
-                    {patient.notes && patient.notes.length > 0 ? (
-                      <ul className="space-y-3">
-                        {patient.notes.map((note, idx) => (
-                          <li key={idx} className="text-xs text-slate-600 flex gap-2">
-                            <span className="w-1.5 h-1.5 bg-blue-400 rounded-full mt-1 shrink-0"></span>
-                            {note}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-xs text-slate-400 italic">No special notes for this patient.</p>
+            {/* Navigation Tabs */}
+            <div className="px-8 border-b border-slate-100 dark:border-slate-800 flex items-center justify-center">
+              <div className="flex gap-1">
+                {tabs.map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-2 px-6 py-4 text-sm font-black transition-all relative ${activeTab === tab.id ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                  >
+                    <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'scale-110' : ''} transition-transform`} />
+                    {tab.label}
+                    {activeTab === tab.id && (
+                      <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full shadow-lg shadow-blue-500/40" />
                     )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Status History */}
-              <div className="space-y-4 pt-4 border-t border-slate-50">
-                <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <Pill className="w-3 h-3" /> Active Medications
-                </h3>
-                
-                <div className="space-y-3">
-                  {(editData.medications || []).length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {(editData.medications || []).map((med) => (
-                        <div key={med.id} className="p-3 bg-white border border-slate-200 rounded-xl card-shadow flex items-start justify-between group relative overflow-hidden">
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
-                          <div className="pl-2">
-                            <div className="font-bold text-slate-800 text-sm">{med.name} <span className="text-blue-600 ml-1">{med.dosage}</span></div>
-                            <div className="text-[11px] text-slate-500 font-medium mt-1 uppercase tracking-tight">{med.frequency}</div>
-                            <div className="text-[10px] text-slate-400 font-mono mt-2">Started: {new Date(med.startDate).toLocaleDateString()}</div>
-                          </div>
-                          {isEditing && (
-                            <button 
-                              onClick={() => handleRemoveMedication(med.id)}
-                              className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="p-4 rounded-xl border border-dashed border-slate-200 text-center">
-                      <span className="text-xs text-slate-400 italic">No active medications registered.</span>
-                    </div>
-                  )}
-
-                  {isEditing && (
-                    <div className="pt-2">
-                      {!showAddMed ? (
-                        <button 
-                          onClick={() => setShowAddMed(true)}
-                          className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors"
-                        >
-                          <Plus className="w-3 h-3" /> Add Medication
-                        </button>
-                      ) : (
-                        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-                          <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">New Prescription</h4>
-                          <div className="grid grid-cols-2 gap-3">
-                            <input 
-                              type="text" placeholder="Medication Name" 
-                              value={newMed.name} onChange={e => setNewMed(p => ({...p, name: e.target.value}))}
-                              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs focus:border-blue-500 outline-none"
-                            />
-                            <input 
-                              type="text" placeholder="Dosage (e.g. 500mg)" 
-                              value={newMed.dosage} onChange={e => setNewMed(p => ({...p, dosage: e.target.value}))}
-                              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs focus:border-blue-500 outline-none"
-                            />
-                            <input 
-                              type="text" placeholder="Frequency" 
-                              value={newMed.frequency} onChange={e => setNewMed(p => ({...p, frequency: e.target.value}))}
-                              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs focus:border-blue-500 outline-none"
-                            />
-                            <input 
-                              type="date" 
-                              value={newMed.startDate} onChange={e => setNewMed(p => ({...p, startDate: e.target.value}))}
-                              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs focus:border-blue-500 outline-none"
-                            />
-                          </div>
-                          <div className="flex justify-end gap-2 pt-2">
-                            <button onClick={() => setShowAddMed(false)} className="text-[10px] font-bold text-slate-500 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors">Cancel</button>
-                            <button onClick={handleAddMedication} className="text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg transition-colors">Save Prescripton</button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-
-              {/* Status History */}
-              <div className="space-y-4 pt-4 border-t border-slate-50">
-                <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <TrendingUp className="w-3 h-3" /> Status History & Clinical Timeline
-                </h3>
-
-                {patient.history && patient.history.length > 1 && (
-                  <div className="mb-6 h-40 bg-white p-4 rounded-xl border border-slate-200 card-shadow">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={[...patient.history].reverse().map(entry => ({
-                        date: new Date(entry.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-                        statusVal: entry.status === 'Critical' ? 1 : entry.status === 'Recovering' ? 2 : 3,
-                        statusLabel: entry.status
-                      }))}>
-                        <XAxis dataKey="date" fontSize={10} tickLine={false} axisLine={false} tickMargin={8} stroke="#94a3b8" />
-                        <YAxis domain={[0, 4]} hide />
-                        <Tooltip 
-                          cursor={{ stroke: '#f1f5f9', strokeWidth: 2 }}
-                          content={({ active, payload }) => {
-                            if (active && payload && payload.length) {
-                              const v = payload[0].payload.statusLabel;
-                              const c = v === 'Critical' ? 'text-red-600' : v === 'Recovering' ? 'text-blue-600' : 'text-green-600';
-                              return (
-                                <div className="bg-white border border-slate-200 text-xs px-3 py-2 rounded-lg shadow-xl font-bold">
-                                  <span className={c}>{v}</span>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                        <Line type="monotone" dataKey="statusVal" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2, fill: '#fff' }} activeDot={{ r: 6, fill: '#3b82f6' }} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-
-                <div className="space-y-6 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-[1px] before:bg-slate-100">
-                  {patient.history && patient.history.length > 0 ? (
-                    patient.history.map((entry, idx) => (
-                      <div key={idx} className="relative pl-8 group">
-                        <div className="absolute left-[5px] top-[5px] w-1.5 h-1.5 rounded-full bg-slate-300 ring-4 ring-white group-first:bg-blue-500 group-first:ring-blue-100 transition-all"></div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-bold text-slate-800">{entry.status}</span>
-                          <span className="text-[10px] font-bold text-slate-400 font-mono tracking-tighter bg-slate-100 px-1.5 py-0.5 rounded">{new Date(entry.date).toLocaleDateString()}</span>
-                        </div>
-                        <p className="text-xs text-slate-500 leading-relaxed bg-white p-2 rounded-lg border border-transparent group-hover:border-slate-100 transition-all">{entry.note}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="pl-8 text-xs text-slate-400 italic">No historical records found for this patient.</div>
-                  )}
-                </div>
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Footer */}
-            {!isEditing && (
-              <div className="p-6 bg-slate-50 border-t border-slate-100 flex flex-col gap-4">
-                <AnimatePresence>
-                  {showScheduleForm && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-4">
-                        <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                          <CalendarCheck className="w-3 h-3" /> Quick Schedule
-                        </h4>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                          <input 
-                            type="date"
-                            value={scheduleData.date}
-                            onChange={(e) => setScheduleData(p => ({ ...p, date: e.target.value }))}
-                            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
-                          />
-                          <input 
-                            type="time"
-                            value={scheduleData.time}
-                            onChange={(e) => setScheduleData(p => ({ ...p, time: e.target.value }))}
-                            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
-                          />
-                          <select 
-                            value={scheduleData.type}
-                            onChange={(e) => setScheduleData(p => ({ ...p, type: e.target.value }))}
-                            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
-                          >
-                            <option value="Consultation">Consultation</option>
-                            <option value="Follow-up">Follow-up</option>
-                            <option value="Examination">Examination</option>
-                          </select>
-                          <select 
-                            value={scheduleData.doctor}
-                            onChange={(e) => setScheduleData(p => ({ ...p, doctor: e.target.value }))}
-                            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500/20 outline-none"
-                          >
-                            <option value="Dr. Sarah Wilson">Dr. Sarah Wilson</option>
-                            <option value="Dr. Michael Chen">Dr. Michael Chen</option>
-                            <option value="Dr. Elena Rodriguez">Dr. Elena Rodriguez</option>
-                          </select>
-                        </div>
-                        <div className="flex justify-end gap-2 pt-2">
-                          <button onClick={() => setShowScheduleForm(false)} className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 transition-all">Cancel</button>
-                          <button onClick={handleScheduleAppointment} disabled={isScheduling} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 shadow-md transition-all flex items-center gap-2">
-                             {isScheduling ? <Activity className="w-3 h-3 animate-spin" /> : <CalendarCheck className="w-3 h-3" />}
-                             Confirm 
-                          </button>
+            {/* Content Area */}
+            <div className="p-10 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-8"
+                >
+                  {activeTab === 'info' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10 text-right">
+                      <div className="space-y-6">
+                        <SectionTitle icon={User} title="المعلومات الديموغرافية" />
+                        <div className="grid grid-cols-2 gap-6">
+                          <DataField label="الاسم الكامل" value={patient.name} />
+                          <DataField label="العمر" value={`${patient.age} سنة`} />
+                          <DataField label="رقم الجوال" value={patient.contact} icon={Phone} />
+                          <DataField label="البريد الإلكتروني" value={patient.email} icon={Mail} />
+                          <div className="col-span-2">
+                            <DataField label="العنوان السكني" value={patient.address || 'غير متوفر'} icon={MapPin} />
+                          </div>
                         </div>
                       </div>
-                    </motion.div>
+                      <div className="space-y-6">
+                        <SectionTitle icon={Activity} title="ملاحظات وحساسية" />
+                        <div className="p-6 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-[2rem] min-h-[150px]">
+                          {patient.notes && patient.notes.length > 0 ? (
+                            <ul className="space-y-3">
+                              {patient.notes.map((note, i) => (
+                                <li key={i} className="text-sm font-bold text-red-700 dark:text-red-400 flex items-start gap-2">
+                                  <div className="w-2 h-2 rounded-full bg-red-400 mt-1.5 shrink-0" />
+                                  {note}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-sm text-slate-400 font-bold italic text-center mt-10">لا توجد ملاحظات أو حساسيات مسجلة.</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   )}
-                </AnimatePresence>
 
-                <div className="flex justify-end gap-3 w-full">
-                  <button 
-                    onClick={onClose}
-                    className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all"
-                  >
-                    Close Profile
-                  </button>
-                  {!showScheduleForm && (
-                     <button onClick={() => setShowScheduleForm(true)} className="px-6 py-2.5 bg-white border border-blue-200 text-blue-600 rounded-xl text-sm font-bold hover:bg-blue-50 shadow-sm transition-all flex items-center gap-2">
-                       <CalendarCheck className="w-4 h-4" /> Schedule Visit
-                     </button>
+                  {activeTab === 'visits' && (
+                    <div className="space-y-8 text-right">
+                      <SectionTitle icon={Clock} title="سجل الزيارات والنشاط السريري" />
+                      <div className="space-y-4 relative before:absolute before:right-4 before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-100 dark:before:bg-slate-800">
+                        {patient.history && patient.history.length > 0 ? (
+                          patient.history.map((visit, i) => (
+                            <div key={i} className="relative pr-12 group">
+                              <div className="absolute right-[11px] top-1.5 w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700 group-first:bg-blue-500 group-first:ring-4 group-first:ring-blue-100 dark:group-first:ring-blue-900/30 transition-all shadow-sm" />
+                              <div className="glass p-6 rounded-3xl border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-800 transition-all">
+                                <div className="flex justify-between items-center mb-2">
+                                  <span className="text-xs font-black text-slate-400 font-mono">{new Date(visit.date).toLocaleDateString('ar-EG')}</span>
+                                  <span className={`text-[10px] font-black px-3 py-1 rounded-full ${statusMap[visit.status]?.color || 'bg-slate-100'}`}>
+                                    {statusMap[visit.status]?.label || visit.status}
+                                  </span>
+                                </div>
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-300 leading-relaxed">{visit.note}</p>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-10 text-slate-400 font-bold italic">لا يوجد سجل زيارات متوفر.</div>
+                        )}
+                      </div>
+                    </div>
                   )}
-                  <button className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-md transition-all flex items-center gap-2">
-                    <FileText className="w-4 h-4" /> Full Medical Report
-                  </button>
-                </div>
+
+                  {activeTab === 'clinical' && (
+                    <div className="space-y-8 text-right">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div className="space-y-6">
+                          <SectionTitle icon={ClipboardList} title="التشخيصات الحالية" />
+                          <div className="space-y-4">
+                            {patient.diagnoses && patient.diagnoses.length > 0 ? (
+                              patient.diagnoses.map(d => (
+                                <div key={d.id} className="p-6 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl">
+                                  <div className="flex justify-between items-start mb-2">
+                                    <h4 className="text-lg font-black text-slate-900 dark:text-white leading-none">{d.condition}</h4>
+                                    <span className="text-[10px] font-mono text-slate-400">{d.date}</span>
+                                  </div>
+                                  <div className="text-xs font-bold text-blue-600 mb-2">بواسطة: {d.doctor}</div>
+                                  <p className="text-xs text-slate-500 font-medium">{d.notes}</p>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-center text-slate-400 italic py-10 font-bold">لا توجد تشخيصات مسجلة.</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="space-y-6">
+                          <SectionTitle icon={TrendingUp} title="الخطة العلاجية" />
+                          <div className="space-y-4">
+                            {patient.treatmentPlans && patient.treatmentPlans.length > 0 ? (
+                              patient.treatmentPlans.map(tp => (
+                                <div key={tp.id} className="p-6 gradient-text border border-blue-100 dark:border-blue-900/20 rounded-3xl bg-blue-50/30 dark:bg-blue-900/5">
+                                  <div className="flex justify-between items-center mb-4">
+                                    <h4 className="text-lg font-black text-blue-700 dark:text-blue-400">{tp.goal}</h4>
+                                    <span className="px-3 py-1 bg-blue-200 dark:bg-blue-800 rounded-full text-[10px] font-black">{tp.status === 'Active' ? 'نشطة' : 'منتهية'}</span>
+                                  </div>
+                                  <ul className="space-y-3">
+                                    {tp.steps.map((step, idx) => (
+                                      <li key={idx} className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-3">
+                                        <CheckCircle className="w-4 h-4 text-emerald-500" />
+                                        {step}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="text-center text-slate-400 italic py-10 font-bold">لا توجد خطة علاجية حالية.</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'meds' && (
+                    <div className="space-y-8 text-right">
+                      <div className="flex justify-between items-center">
+                        <SectionTitle icon={Pill} title="الأدوية الموصوفة" />
+                        <button className="flex items-center gap-2 text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-xl text-xs font-black hover:bg-blue-100 transition-all">
+                          <Plus className="w-4 h-4" /> إضافة دواء
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {patient.medications && patient.medications.length > 0 ? (
+                          patient.medications.map(med => (
+                            <div key={med.id} className="glass p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group">
+                              <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-blue-500" />
+                              <div className="flex justify-between items-start mb-4">
+                                <div>
+                                  <h4 className="text-xl font-black text-slate-900 dark:text-white leading-none">{med.name}</h4>
+                                  <span className="text-xs font-bold text-blue-600 mt-1 block">{med.dosage}</span>
+                                </div>
+                                <div className="text-xs font-bold text-slate-400 bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg">بدأت: {med.startDate}</div>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-400 mb-4">
+                                <RotateCcw className="w-4 h-4 text-blue-400" />
+                                التكرار: {med.frequency}
+                              </div>
+                              <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                                <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all">
+                                  <Edit3 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="col-span-2 text-center py-20 text-slate-400 italic font-bold">لا توجد أدوية حالية.</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'labs' && (
+                    <div className="space-y-8 text-right">
+                      <SectionTitle icon={Microscope} title="الفحوصات والأشعة" />
+                      <div className="space-y-4">
+                        {patient.labResults && patient.labResults.length > 0 ? (
+                          patient.labResults.map(lab => (
+                            <div key={lab.id} className="flex flex-col md:flex-row items-center justify-between p-6 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl gap-4">
+                              <div className="flex items-center gap-6 flex-1">
+                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-[10px] ${lab.status === 'Normal' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                                  {lab.status === 'Normal' ? 'سليم' : 'غير سليم'}
+                                </div>
+                                <div className="text-right">
+                                  <h4 className="text-lg font-black text-slate-800 dark:text-slate-100">{lab.testName}</h4>
+                                  <div className="text-sm font-bold text-slate-500">{lab.result}</div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-6">
+                                <div className="text-right">
+                                  <div className="text-xs font-bold text-slate-400">تاريخ الفحص</div>
+                                  <div className="text-sm font-black text-slate-700 dark:text-slate-300 font-mono">{lab.date}</div>
+                                </div>
+                                <button className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6 py-2.5 rounded-xl text-xs font-black text-blue-600 hover:bg-blue-50 transition-all">
+                                  <Download className="w-4 h-4" /> تحميل النتيجة
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-20 text-slate-400 italic font-bold">لا توجد نتائج فحوصات مسجلة.</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="p-8 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center gap-4">
+              <div className="flex gap-3">
+                 <button className="flex items-center gap-2 bg-linear-to-r from-blue-600 to-indigo-600 px-8 py-4 rounded-2xl text-sm font-black text-white hover:shadow-xl hover:shadow-blue-500/25 transition-all active:scale-95">
+                    <FileText className="w-5 h-5" /> إنشاء تقرير طبي كامل
+                 </button>
+                 <button className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-900/50 px-8 py-4 rounded-2xl text-sm font-black text-blue-600 hover:bg-blue-50 transition-all shadow-sm">
+                    <CalendarCheck className="w-5 h-5" /> حجز موعد جديد
+                 </button>
               </div>
-            )}
+              <button onClick={onClose} className="px-8 py-4 text-slate-500 font-black text-sm hover:text-slate-800 dark:hover:text-white transition-colors">إغلاق النافذة</button>
+            </div>
           </motion.div>
         </div>
       )}
@@ -483,3 +352,23 @@ export default function PatientModal({ patient, isOpen, onClose, onUpdate }: Pat
   );
 }
 
+function SectionTitle({ icon: Icon, title }: { icon: any, title: string }) {
+  return (
+    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-3 border-r-4 border-blue-500 pr-3">
+      <Icon className="w-4 h-4 text-blue-500" />
+      {title}
+    </h3>
+  );
+}
+
+function DataField({ label, value, icon: Icon }: { label: string, value: any, icon?: any }) {
+  return (
+    <div className="space-y-1.5 group">
+      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">{label}</div>
+      <div className="glass p-4 rounded-2xl border border-slate-100 dark:border-slate-800 text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-3 group-hover:border-blue-200 transition-all">
+        {Icon && <Icon className="w-4 h-4 text-blue-400" />}
+        {value}
+      </div>
+    </div>
+  );
+}

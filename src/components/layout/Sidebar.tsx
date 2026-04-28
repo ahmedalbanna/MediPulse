@@ -1,41 +1,69 @@
-import { LayoutDashboard, Users, Calendar, Activity, ClipboardList, DollarSign } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Activity, ClipboardList, DollarSign, Briefcase, Clock, CalendarDays, ShieldCheck } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
-const navItems = [
-  { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/patients', label: 'Patient Records', icon: Users },
-  { path: '/appointments', label: 'Appointments', icon: Calendar },
-  { path: '/records', label: 'Medical Records', icon: ClipboardList },
-  { path: '/ai-diagnostics', label: 'AI Diagnostics', icon: Activity },
-  { path: '/billing', label: 'Finance & Billing', icon: DollarSign },
-  { path: '/settings/users', label: 'User Management', icon: Users },
+const mainNavItems = [
+  { path: '/', label: 'لوحة التحكم', icon: LayoutDashboard },
+  { path: '/patients', label: 'ملفات المرضى', icon: Users },
+  { path: '/appointments', label: 'المواعيد والزيارات', icon: Calendar },
+  { path: '/records', label: 'السجلات الطبية', icon: ClipboardList },
+  { path: '/ai-diagnostics', label: 'التشخيص الذكي (AI)', icon: Activity },
+  { path: '/billing', label: 'الفواتير والمالية', icon: DollarSign },
+];
+
+const hrNavItems = [
+  { path: '/hr/staff', label: 'دليل الموظفين', icon: Users },
+  { path: '/hr/attendance', label: 'الحضور والانصراف', icon: Clock },
+  { path: '/hr/shifts', label: 'المناوبات والجدول', icon: CalendarDays },
+  { path: '/hr/leaves', label: 'الإجازات والطلبات', icon: ClipboardList },
+  { path: '/settings/users', label: 'الأدوار والصلاحيات', icon: ShieldCheck },
 ];
 
 export default function Sidebar() {
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-20 transition-colors duration-200">
+    <aside className="fixed right-0 top-0 h-screen w-64 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col z-20 transition-colors duration-200 shadow-xl">
       <div className="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800">
-        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-          <span className="text-white font-bold text-lg">M</span>
+        <div className="w-10 h-10 bg-linear-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+          <span className="text-white font-bold text-xl">M</span>
         </div>
-        <span className="text-slate-800 dark:text-slate-100 font-bold text-lg tracking-tight">MediFlow Pro</span>
+        <div className="flex flex-col">
+          <span className="text-slate-800 dark:text-slate-100 font-extrabold text-lg tracking-tight leading-none">MediFlow Pro</span>
+          <span className="text-[10px] text-blue-500 font-bold uppercase tracking-widest mt-1">المستشفى التخصصي</span>
+        </div>
       </div>
       
-      <nav className="flex-1 py-4 overflow-y-auto">
-        <div className="px-6 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Main Modules</div>
-        {navItems.map((item) => (
+      <nav className="flex-1 py-4 overflow-y-auto custom-scrollbar">
+        <div className="px-6 mb-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">الموديولات الأساسية</div>
+        {mainNavItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
-              `flex items-center space-x-3 px-6 py-2.5 text-sm font-medium transition-all ${
+              `flex items-center space-x-3 space-x-reverse px-6 py-3 text-sm font-bold transition-all ${
                 isActive 
-                  ? 'sidebar-active shadow-sm dark:bg-blue-900/20' 
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  ? 'bg-blue-50/50 text-blue-600 border-l-4 border-blue-600 dark:bg-blue-900/20' 
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
               }`
             }
           >
-            <item.icon className={`w-4 h-4 ${navItems[0].path === item.path ? '' : ''}`} />
+            <item.icon className={`w-5 h-5 transition-transform duration-200`} />
+            <span>{item.label}</span>
+          </NavLink>
+        ))}
+
+        <div className="px-6 mt-8 mb-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">الموارد البشرية والعمليات</div>
+        {hrNavItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) =>
+              `flex items-center space-x-3 space-x-reverse px-6 py-3 text-sm font-bold transition-all ${
+                isActive 
+                  ? 'bg-emerald-50/50 text-emerald-600 border-l-4 border-emerald-600 dark:bg-emerald-900/20' 
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+              }`
+            }
+          >
+            <item.icon className="w-5 h-5" />
             <span>{item.label}</span>
           </NavLink>
         ))}

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { DollarSign, FileText, TrendingUp, CreditCard, Clock, CheckCircle2, AlertCircle, Plus, Search, Filter, ArrowUpRight, ArrowDownRight, MoreVertical, Download } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { DollarSign, FileText, TrendingUp, CreditCard, Clock, CheckCircle2, AlertCircle, Plus, Search, Filter, ArrowUpRight, ArrowDownRight, MoreVertical, Download, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getInvoices, getBillingStats, payInvoice, getTransactions, createInvoice, Invoice, BillingStats, Transaction } from '../services/billingService';
 import { getPatients, Patient } from '../services/patientService';
 
@@ -15,11 +15,7 @@ export default function Billing() {
   const [showAddInvoice, setShowAddInvoice] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [invData, trxData, statsData, patientsData] = await Promise.all([
@@ -37,7 +33,11 @@ export default function Billing() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handlePay = async (id: string) => {
     setProcessingId(id);
@@ -53,148 +53,158 @@ export default function Billing() {
 
   if (loading && !stats) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="w-10 h-10 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div>
+      <div className="flex flex-col items-center justify-center min-h-[600px] gap-6">
+        <div className="w-16 h-16 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div>
+        <p className="text-slate-400 font-black tracking-widest text-[10px] uppercase">جاري تحميل البيانات المالية...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-8 pt-24 space-y-8">
+    <div className="p-8 pt-24 space-y-10 text-right animate-in fade-in duration-700">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-800 tracking-tight flex items-center gap-3">
-            <DollarSign className="w-8 h-8 text-emerald-600" />
-            Financial Operations
+          <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-4">
+            <div className="p-3 bg-linear-to-br from-emerald-600 to-teal-600 rounded-2xl shadow-xl shadow-emerald-500/20">
+              <DollarSign className="w-8 h-8 text-white" />
+            </div>
+            العمليات المالية والفواتير
           </h1>
-          <p className="text-slate-500 mt-1 font-medium">Manage patient billing, process payments, and monitor revenue cycle.</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-4 font-bold max-w-2xl">إدارة فواتير المرضى، معالجة الدفعات، ومراقبة دورة الإيرادات والأداء المالي للمنشأة.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-50 shadow-sm transition-all">
-            <Download className="w-4 h-4" /> Export Report
+        <div className="flex items-center gap-4">
+          <button className="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 px-8 py-4 rounded-2xl text-sm font-black hover:bg-slate-50 transition-all shadow-sm">
+            <Download className="w-5 h-5" /> تصدير التقرير
           </button>
           <button 
             onClick={() => setShowAddInvoice(true)}
-            className="flex items-center gap-2 bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-emerald-700 shadow-md transition-all active:scale-95"
+            className="flex items-center gap-3 bg-linear-to-r from-emerald-600 to-teal-600 text-white px-8 py-4 rounded-2xl text-sm font-black hover:shadow-2xl hover:shadow-emerald-500/30 transition-all active:scale-95"
           >
-            <Plus className="w-4 h-4" /> New Invoice
+            <Plus className="w-5 h-5" /> فاتورة جديدة
           </button>
         </div>
       </div>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
-          <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4">
-            <TrendingUp className="w-5 h-5" />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800 shadow-xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none group-hover:scale-150 transition-transform"></div>
+          <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+            <TrendingUp className="w-7 h-7" />
           </div>
-          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Revenue</h3>
-          <p className="text-2xl font-black text-slate-800">${stats?.totalRevenue.toLocaleString()}</p>
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 mt-2">
-            <ArrowUpRight className="w-3 h-3" /> +12.5% from last month
+          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 border-r-4 border-emerald-500 pr-3">إجمالي الإيرادات</h3>
+          <p className="text-3xl font-black text-slate-900 dark:text-white font-mono">${stats?.totalRevenue.toLocaleString()}</p>
+          <div className="flex items-center gap-2 text-[10px] font-black text-emerald-600 mt-4">
+            <ArrowUpRight className="w-4 h-4" /> +12.5% عن الشهر الماضي
           </div>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
-          <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4">
-            <Clock className="w-5 h-5" />
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="glass rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800 shadow-xl relative overflow-hidden group">
+          <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+            <Clock className="w-7 h-7" />
           </div>
-          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Awaiting</h3>
-          <p className="text-2xl font-black text-slate-800">${stats?.pendingAmount.toLocaleString()}</p>
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 mt-2">
-            {stats?.paidCount} of {stats?.invoiceCount} invoices paid
+          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 border-r-4 border-blue-500 pr-3">مبالغ قيد الانتظار</h3>
+          <p className="text-3xl font-black text-slate-900 dark:text-white font-mono">${stats?.pendingAmount.toLocaleString()}</p>
+          <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 mt-4">
+            تم دفع {stats?.paidCount} من أصل {stats?.invoiceCount} فاتورة
           </div>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
-          <div className="w-10 h-10 bg-red-100 text-red-600 rounded-xl flex items-center justify-center mb-4">
-            <AlertCircle className="w-5 h-5" />
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800 shadow-xl relative overflow-hidden group">
+          <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+            <AlertCircle className="w-7 h-7" />
           </div>
-          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Overdue Amount</h3>
-          <p className="text-2xl font-black text-slate-800">${stats?.overdueAmount.toLocaleString()}</p>
-          <div className="flex items-center gap-1.5 text-[10px] font-bold text-red-600 mt-2">
-            Requires immediate attention
+          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 border-r-4 border-red-500 pr-3">مبالغ متأخرة</h3>
+          <p className="text-3xl font-black text-slate-900 dark:text-white font-mono">${stats?.overdueAmount.toLocaleString()}</p>
+          <div className="flex items-center gap-2 text-[10px] font-black text-red-600 mt-4">
+            تتطلب متابعة فورية
           </div>
-        </div>
-        <div className="md:col-span-1 bg-emerald-900 rounded-3xl p-6 text-white overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl"></div>
-          <h3 className="text-[10px] font-bold text-emerald-300 uppercase tracking-widest mb-4">Quick Stats</h3>
-          <div className="space-y-4">
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-linear-to-br from-emerald-900 to-teal-950 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl group-hover:scale-150 transition-transform pointer-events-none"></div>
+          <h3 className="text-[10px] font-black text-emerald-300 uppercase tracking-widest mb-6 border-r-4 border-emerald-400 pr-3">كفاءة التحصيل</h3>
+          <div className="space-y-6 relative">
             <div className="flex justify-between items-end">
-              <span className="text-[11px] font-medium text-emerald-200">Collection Rate</span>
-              <span className="text-xl font-bold">84.2%</span>
+              <span className="text-sm font-bold text-emerald-200">معدل التحصيل الكلي</span>
+              <span className="text-4xl font-black">84.2%</span>
             </div>
-            <div className="h-1.5 w-full bg-emerald-800 rounded-full overflow-hidden">
-              <div className="h-full bg-emerald-400 w-[84%]"></div>
+            <div className="h-3 w-full bg-emerald-950/50 rounded-full overflow-hidden border border-white/5">
+              <div className="h-full bg-linear-to-r from-emerald-500 to-teal-400 w-[84%] shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
             </div>
-            <p className="text-[9px] text-emerald-400">Target collection: 95% (+10.8% remaining)</p>
+            <p className="text-[10px] text-emerald-400 font-bold tracking-widest">المستهدف: 95% (تبقي +10.8%)</p>
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         {/* Revenue Chart */}
-        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-lg font-bold text-slate-800">Monthly Revenue Growth</h3>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></div> Revenue
+        <div className="lg:col-span-2 glass rounded-[2.5rem] p-10 border border-slate-100 dark:border-slate-800 shadow-xl">
+          <div className="flex items-center justify-between mb-10">
+            <h3 className="text-xl font-black text-slate-900 dark:text-white border-r-8 border-emerald-500 pr-5">نمو الإيرادات الشهرية</h3>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 text-xs font-black text-slate-400">
+                <div className="w-3 h-3 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20"></div> الإيرادات المحققة
               </div>
             </div>
           </div>
-          <div className="h-[300px] w-full">
+          <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={stats?.monthlyRevenue}>
                 <defs>
                   <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} tickFormatter={(value) => `$${value}`} />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 'bold'}} dy={15} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 'bold'}} tickFormatter={(value) => `$${value}`} dx={-15} />
                 <Tooltip 
-                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }}
-                  itemStyle={{ fontWeight: 'bold' }}
+                  contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', padding: '20px', background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(10px)' }}
+                  itemStyle={{ fontWeight: '900', color: '#10b981' }}
+                  labelStyle={{ fontWeight: '900', color: '#64748b', marginBottom: '8px' }}
                 />
-                <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+                <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={5} fillOpacity={1} fill="url(#colorRev)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Recent Transactions Side List */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col">
-          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center justify-between">
-            Recent Payments
-            <button className="text-blue-600 hover:underline">View All</button>
+        {/* Recent Transactions List */}
+        <div className="glass rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800 shadow-xl flex flex-col">
+          <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8 flex items-center justify-between border-r-4 border-blue-500 pr-3">
+            آخر الدفعات المستلمة
+            <button className="text-blue-500 hover:underline">عرض الكل</button>
           </h3>
-          <div className="space-y-4 flex-grow">
-            {transactions.slice(0, 5).map(trx => (
-              <div key={trx.id} className="flex items-center gap-4 p-3 hover:bg-slate-50 rounded-2xl transition-all border border-transparent hover:border-slate-100">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${trx.type === 'Payment' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-                  {trx.type === 'Payment' ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownRight className="w-5 h-5" />}
+          <div className="space-y-6 flex-grow">
+            {transactions.slice(0, 6).map((trx, idx) => (
+              <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.1 }}
+                key={trx.id} className="flex items-center gap-6 p-4 hover:bg-slate-50 dark:hover:bg-slate-900 rounded-[2rem] transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-800 group"
+              >
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${trx.type === 'Payment' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'}`}>
+                  {trx.type === 'Payment' ? <ArrowUpRight className="w-6 h-6" /> : <ArrowDownRight className="w-6 h-6" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <p className="text-xs font-bold text-slate-800 truncate">{trx.invoiceId}</p>
-                    <p className="text-xs font-black text-slate-900">${trx.amount.toLocaleString()}</p>
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs font-black text-slate-800 dark:text-slate-100 truncate">{trx.invoiceId}</p>
+                    <p className="text-sm font-black text-slate-900 dark:text-white font-mono">${trx.amount.toLocaleString()}</p>
                   </div>
                   <div className="flex items-center justify-between">
-                    <p className="text-[10px] text-slate-400 font-medium">{trx.method} • {new Date(trx.date).toLocaleDateString()}</p>
-                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-tight">Completed</p>
+                    <p className="text-[10px] text-slate-400 font-bold">{trx.method} • {new Date(trx.date).toLocaleDateString('ar-EG')}</p>
+                    <p className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">مكتمل</p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
-          <div className="mt-6 pt-6 border-t border-slate-100">
-            <div className="bg-emerald-50 rounded-2xl p-4 flex items-center gap-3">
-              <CreditCard className="w-5 h-5 text-emerald-600" />
+          <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
+            <div className="bg-linear-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-[1.5rem] p-6 flex items-center gap-4 border border-emerald-100 dark:border-emerald-900/30">
+              <CreditCard className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
               <div>
-                <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">Active Gateway</p>
-                <p className="text-xs font-bold text-emerald-600">Mock Provider Connected</p>
+                <p className="text-[10px] font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-widest mb-1">بوابة الدفع النشطة</p>
+                <p className="text-xs font-black text-emerald-600">MediPay Secure Gateway v1.0</p>
               </div>
             </div>
           </div>
@@ -202,79 +212,79 @@ export default function Billing() {
       </div>
 
       {/* Main Table Tabs */}
-      <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
-        <div className="px-8 pt-6 border-b border-slate-100">
-          <div className="flex items-center gap-8">
+      <div className="glass rounded-[2.5rem] overflow-hidden border border-slate-100 dark:border-slate-800 shadow-xl bg-white/50 dark:bg-slate-950/50">
+        <div className="px-10 pt-10 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-12">
             <button 
               onClick={() => setActiveTab('invoices')}
-              className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'invoices' ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`pb-6 text-md font-black transition-all relative ${activeTab === 'invoices' ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'}`}
             >
-              Master Invoices
-              {activeTab === 'invoices' && <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-600 rounded-full" />}
+              سجل الفواتير الرئيسية
+              {activeTab === 'invoices' && <motion.div layoutId="tab-underline-billing" className="absolute bottom-0 left-0 right-0 h-1.5 bg-emerald-600 rounded-full" />}
             </button>
             <button 
               onClick={() => setActiveTab('transactions')}
-              className={`pb-4 text-sm font-bold transition-all relative ${activeTab === 'transactions' ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`pb-6 text-md font-black transition-all relative ${activeTab === 'transactions' ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-600'}`}
             >
-              Transaction Log
-              {activeTab === 'transactions' && <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-600 rounded-full" />}
+              سجل الحركات المالية (Log)
+              {activeTab === 'transactions' && <motion.div layoutId="tab-underline-billing" className="absolute bottom-0 left-0 right-0 h-1.5 bg-emerald-600 rounded-full" />}
             </button>
           </div>
         </div>
 
         <div className="overflow-x-auto">
           {activeTab === 'invoices' ? (
-            <table className="w-full text-left">
+            <table className="w-full text-right">
               <thead>
-                <tr className="bg-slate-50/50">
-                  <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">ID & Date</th>
-                  <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Client Patient</th>
-                  <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Amount</th>
-                  <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Due Date</th>
-                  <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
-                  <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Control</th>
+                <tr className="bg-slate-50/50 dark:bg-slate-900/50">
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">المعرف والتاريخ</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">المريض / العميل</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">المبلغ الإجمالي</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">تاريخ الاستحقاق</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">الحالة</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">الإجراءات</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-900">
                 {invoices.map(invoice => (
-                  <tr key={invoice.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-8 py-5">
-                      <div className="text-sm font-bold text-slate-800">{invoice.id}</div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{new Date(invoice.date).toLocaleDateString()}</div>
+                  <tr key={invoice.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-900/30 transition-colors group">
+                    <td className="px-10 py-8">
+                      <div className="text-sm font-black text-slate-800 dark:text-slate-100 font-mono tracking-wider">{invoice.id}</div>
+                      <div className="text-[10px] text-slate-400 font-black uppercase mt-1">{new Date(invoice.date).toLocaleDateString('ar-EG')}</div>
                     </td>
-                    <td className="px-8 py-5">
-                      <div className="text-sm font-bold text-slate-800">{invoice.patientName}</div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">UID: {invoice.patientId}</div>
+                    <td className="px-10 py-8">
+                      <div className="text-sm font-black text-slate-800 dark:text-slate-100">{invoice.patientName}</div>
+                      <div className="text-[11px] text-slate-500 font-bold mt-1">UID: {invoice.patientId}</div>
                     </td>
-                    <td className="px-8 py-5">
-                      <div className="text-sm font-black text-slate-900">${invoice.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                    <td className="px-10 py-8">
+                      <div className="text-lg font-black text-slate-900 dark:text-white font-mono">${invoice.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                     </td>
-                    <td className="px-8 py-5">
-                      <div className="text-sm font-bold text-slate-600">{new Date(invoice.dueDate).toLocaleDateString()}</div>
+                    <td className="px-10 py-8">
+                      <div className="text-xs font-black text-slate-600 dark:text-slate-400">{new Date(invoice.dueDate).toLocaleDateString('ar-EG')}</div>
                     </td>
-                    <td className="px-8 py-5">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-tighter uppercase border
-                        ${invoice.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
-                          invoice.status === 'Pending' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
-                          invoice.status === 'Overdue' ? 'bg-red-50 text-red-600 border-red-100' : 
-                          'bg-slate-50 text-slate-600 border-slate-100'}`}
+                    <td className="px-10 py-8">
+                      <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase border
+                        ${invoice.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/50' : 
+                          invoice.status === 'Pending' ? 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/50' : 
+                          invoice.status === 'Overdue' ? 'bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/50' : 
+                          'bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'}`}
                       >
-                        {invoice.status}
+                        {invoice.status === 'Paid' ? 'مدفوعة' : invoice.status === 'Pending' ? 'معلقة' : invoice.status === 'Overdue' ? 'متأخرة' : invoice.status}
                       </span>
                     </td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-3">
+                    <td className="px-10 py-8">
+                      <div className="flex items-center gap-4">
                         {invoice.status !== 'Paid' && (
                           <button 
                             onClick={() => handlePay(invoice.id)}
                             disabled={processingId === invoice.id}
-                            className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-emerald-700 shadow-sm transition-all disabled:opacity-50"
+                            className="bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-[10px] font-black hover:bg-emerald-700 shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50 active:scale-95"
                           >
-                            {processingId === invoice.id ? 'Processing...' : 'Collect Payment'}
+                            {processingId === invoice.id ? <RotateCcw className="w-4 h-4 animate-spin" /> : 'تحصيل المبلع'}
                           </button>
                         )}
-                        <button className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-600 rounded-lg transition-all">
-                          <MoreVertical className="w-4 h-4" />
+                        <button className="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 rounded-xl transition-all border border-slate-100 dark:border-slate-800">
+                          <MoreVertical className="w-5 h-5" />
                         </button>
                       </div>
                     </td>
@@ -283,43 +293,43 @@ export default function Billing() {
               </tbody>
             </table>
           ) : (
-            <table className="w-full text-left">
+            <table className="w-full text-right">
               <thead>
-                <tr className="bg-slate-50/50">
-                  <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">ID & Date</th>
-                  <th className="px-8 py-4 text-[10px) font-bold text-slate-400 uppercase tracking-widest">Type</th>
-                  <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Invoice Ref</th>
-                  <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Method</th>
-                  <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Amount</th>
-                  <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
+                <tr className="bg-slate-50/50 dark:bg-slate-900/50">
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">المعرف والتاريخ</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">نوع العملية</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">مرجع الفاتورة</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">طريقة الدفع</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">المبلغ</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">الحالة</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-900">
                 {transactions.map(trx => (
-                  <tr key={trx.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-8 py-5">
-                      <div className="text-sm font-bold text-slate-800">{trx.id}</div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{new Date(trx.date).toLocaleDateString()}</div>
+                  <tr key={trx.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-900/30 transition-colors">
+                    <td className="px-10 py-8">
+                      <div className="text-sm font-black text-slate-800 dark:text-slate-100 font-mono tracking-wider">{trx.id}</div>
+                      <div className="text-[10px] text-slate-400 font-black uppercase mt-1">{new Date(trx.date).toLocaleDateString('ar-EG')}</div>
                     </td>
-                    <td className="px-8 py-5">
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tight ${trx.type === 'Payment' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                        {trx.type}
+                    <td className="px-10 py-8">
+                      <span className={`px-4 py-1 rounded text-[10px] font-black uppercase tracking-widest ${trx.type === 'Payment' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                        {trx.type === 'Payment' ? 'دفعة مستلمة' : 'مسترد'}
                       </span>
                     </td>
-                    <td className="px-8 py-5">
-                      <div className="text-sm font-bold text-slate-600 uppercase">{trx.invoiceId}</div>
+                    <td className="px-10 py-8">
+                      <div className="text-sm font-black text-slate-600 dark:text-slate-400 uppercase font-mono">{trx.invoiceId}</div>
                     </td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
-                        <CreditCard className="w-3.5 h-3.5 text-slate-400" /> {trx.method}
+                    <td className="px-10 py-8">
+                      <div className="flex items-center gap-3 text-sm font-bold text-slate-600 dark:text-slate-400">
+                        <CreditCard className="w-5 h-5 text-slate-400" /> {trx.method}
                       </div>
                     </td>
-                    <td className="px-8 py-5">
-                      <div className="text-sm font-black text-slate-900">${trx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                    <td className="px-10 py-8">
+                      <div className="text-lg font-black text-slate-900 dark:text-white font-mono">${trx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                     </td>
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 uppercase">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Settled
+                    <td className="px-10 py-8">
+                      <div className="flex items-center gap-2 text-[10px] font-black text-emerald-600 uppercase tracking-widest">
+                        <CheckCircle2 className="w-5 h-5" /> تمت التسوية
                       </div>
                     </td>
                   </tr>
@@ -333,19 +343,19 @@ export default function Billing() {
       {/* Add Invoice Modal */}
       <AnimatePresence>
         {showAddInvoice && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowAddInvoice(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
             />
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden p-8"
+              initial={{ scale: 0.9, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              className="relative w-full max-w-xl bg-white dark:bg-slate-950 rounded-[3rem] shadow-2xl overflow-hidden p-10 glass border border-white/10"
             >
-              <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
-                <FileText className="w-6 h-6 text-emerald-600" />
-                Generate New Invoice
+              <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-8 flex items-center gap-4 border-r-8 border-emerald-600 pr-5">
+                <FileText className="w-8 h-8 text-emerald-600" />
+                إنشاء فاتورة جديدة
               </h2>
               <form onSubmit={async (e) => {
                 e.preventDefault();
@@ -362,39 +372,39 @@ export default function Billing() {
                 
                 setShowAddInvoice(false);
                 fetchData();
-              }} className="space-y-6">
+              }} className="space-y-8 text-right">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Patient Selection</label>
-                  <select name="patientId" required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none">
-                    <option value="">Select recipient...</option>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block border-r-4 border-slate-200 pr-3">اختيار المستلم (المريض)</label>
+                  <select name="patientId" required className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-emerald-500/10 outline-none dark:text-white">
+                    <option value="">اختر المريض...</option>
                     {patients.map(p => (
                       <option key={p.id} value={p.id}>{p.name} ({p.id})</option>
                     ))}
                   </select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Service Category</label>
-                    <input name="desc" placeholder="e.g. Consultation" required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none" />
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block border-r-4 border-slate-200 pr-3">فئة الخدمة</label>
+                    <input name="desc" placeholder="مثال: استشارة طبية" required className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-emerald-500/10 outline-none dark:text-white" />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Grand Total ($)</label>
-                    <input name="amount" type="number" step="0.01" min="0" placeholder="0.00" required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none" />
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block border-r-4 border-slate-200 pr-3">المبلغ الإجمالي ($)</label>
+                    <input name="amount" type="number" step="0.01" min="0" placeholder="0.00" required className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-emerald-500/10 outline-none dark:text-white" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Fulfillment Due Date</label>
-                  <input name="dueDate" type="date" required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-emerald-500/20 outline-none" />
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block border-r-4 border-slate-200 pr-3">تاريخ استحقاق السداد</label>
+                  <input name="dueDate" type="date" required className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-emerald-500/10 outline-none dark:text-white" />
                 </div>
 
-                <div className="flex gap-4 pt-4">
-                  <button type="button" onClick={() => setShowAddInvoice(false)} className="flex-1 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
-                    Cancel
+                <div className="flex gap-4 pt-6">
+                  <button type="button" onClick={() => setShowAddInvoice(false)} className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-[1.5rem] text-sm font-black hover:bg-slate-200 transition-all">
+                    إلغاء
                   </button>
-                  <button type="submit" className="flex-1 py-3 bg-emerald-600 text-white rounded-2xl text-sm font-bold hover:bg-emerald-700 shadow-xl shadow-emerald-100 transition-all active:scale-95">
-                    Generate Invoice
+                  <button type="submit" className="flex-1 py-4 bg-linear-to-r from-emerald-600 to-teal-600 text-white rounded-[1.5rem] text-sm font-black hover:shadow-2xl hover:shadow-emerald-500/30 transition-all shadow-xl active:scale-95">
+                    إصدار الفاتورة
                   </button>
                 </div>
               </form>

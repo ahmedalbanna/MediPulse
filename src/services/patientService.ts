@@ -6,6 +6,32 @@ export interface Medication {
   startDate: string;
 }
 
+export interface Diagnosis {
+  id: string;
+  date: string;
+  condition: string;
+  doctor: string;
+  notes: string;
+}
+
+export interface LabResult {
+  id: string;
+  date: string;
+  testName: string;
+  result: string;
+  status: 'Normal' | 'Abnormal' | 'Pending';
+  attachmentUrl?: string;
+}
+
+export interface TreatmentPlan {
+  id: string;
+  startDate: string;
+  endDate?: string;
+  goal: string;
+  steps: string[];
+  status: 'Active' | 'Completed' | 'Modified';
+}
+
 export interface Patient {
   id: string;
   name: string;
@@ -19,6 +45,9 @@ export interface Patient {
   history?: { date: string, status: string, note: string }[];
   notes?: string[];
   medications?: Medication[];
+  diagnoses?: Diagnosis[];
+  labResults?: LabResult[];
+  treatmentPlans?: TreatmentPlan[];
 }
 
 export async function getPatients(

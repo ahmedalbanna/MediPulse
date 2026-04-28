@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, ChevronLeft, ChevronRight, ArrowUpDown, Filter, MoreVertical, UserPlus, FileText, CheckCircle, AlertTriangle, Download, X } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, ArrowUpDown, Filter, MoreVertical, UserPlus, FileText, CheckCircle, AlertTriangle, Download, X, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { getPatients, getAllPatients, Patient } from '../services/patientService';
@@ -21,37 +21,26 @@ export default function Patients() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Filters State
   const [showFilters, setShowFilters] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('');
-  const [filterMinAge, setFilterMinAge] = useState<string>('');
-  const [filterMaxAge, setFilterMaxAge] = useState<string>('');
-
+  
   const location = useLocation();
   const navigate = useNavigate();
 
   const fetchPatients = useCallback(async () => {
     setLoading(true);
     try {
-      const filters = {
-        status: filterStatus || undefined,
-        minAge: filterMinAge || undefined,
-        maxAge: filterMaxAge || undefined
-      };
-      
+      const filters = { status: filterStatus || undefined };
       const result = await getPatients(page, 8, sortBy, sortOrder, filters);
       setPatients(result.data);
       setTotal(result.total);
       setTotalPages(result.totalPages);
       
-      // Auto-open modal if there's a search param representing an ID
       const queryParams = new URLSearchParams(location.search);
       const searchId = queryParams.get('search');
       if (searchId) {
-        // try to find the patient locally first
         let p = result.data.find((pat: Patient) => pat.id === searchId);
         if (!p) {
-            // maybe it's not on this page, let's fetch all quickly just to get the record
             const all = await getAllPatients();
             p = all.find((pat: Patient) => pat.id === searchId);
         }
@@ -59,42 +48,18 @@ export default function Patients() {
           setSelectedPatient(p);
           setIsModalOpen(true);
         }
-        // clear the URL param so it doesn't reopen indefinitely on other state changes
         navigate('/patients', { replace: true });
       }
-
     } catch (error) {
       console.error('Failed to fetch patients:', error);
     } finally {
       setLoading(false);
     }
-  }, [page, sortBy, sortOrder, filterStatus, filterMinAge, filterMaxAge, location.search, navigate]);
+  }, [page, sortBy, sortOrder, filterStatus, location.search, navigate]);
 
   useEffect(() => {
     fetchPatients();
   }, [fetchPatients]);
-
-  const handleExportCSV = async () => {
-    try {
-      const allData = await getAllPatients();
-      const headers = ["ID", "Name", "Age", "Gender", "Email", "Contact", "Status", "Last Visit"];
-      const rows = allData.map((p: Patient) => [
-        p.id, `"${p.name}"`, p.age, p.gender, p.email, p.contact, p.status, p.lastVisit
-      ]);
-      const csvContent = "data:text/csv;charset=utf-8," 
-        + headers.join(",") + "\n"
-        + rows.map(e => e.join(",")).join("\n");
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `patients_export_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Export failed", error);
-    }
-  };
 
   const handleSort = (key: keyof Patient) => {
     if (sortBy === key) {
@@ -103,13 +68,13 @@ export default function Patients() {
       setSortBy(key);
       setSortOrder('asc');
     }
-    setPage(1); // Reset to first page on sort
+    setPage(1);
   };
 
-  const statusColors = {
-    'Critical': 'bg-red-100 text-red-700 border-red-200',
-    'Stable': 'bg-green-100 text-green-700 border-green-200',
-    'Recovering': 'bg-blue-100 text-blue-700 border-blue-200',
+  const statusMap: Record<string, { label: string, color: string }> = {
+    'Critical': { label: 'حرج', color: 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400' },
+    'Stable': { label: 'مستقر', color: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400' },
+    'Recovering': { label: 'قيد التعافي', color: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400' },
   };
 
   const filteredPatients = patients.filter(p => 
@@ -117,37 +82,26 @@ export default function Patients() {
     p.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleRowClick = (patient: Patient) => {
-    setSelectedPatient(patient);
-    setIsModalOpen(true);
-  };
-
   return (
-    <div className="p-8 pt-24 space-y-6">
+    <div className="p-8 pt-24 space-y-8 animate-in fade-in duration-700">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Patient Directory</h2>
-          <p className="text-sm text-slate-500">Manage and monitor all registered patients across all branches.</p>
+          <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-none mb-2">دليل المرضى</h1>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">إدارة ومتابعة كافة سجلات المرضى المسجلين في فروع المستشفى.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button 
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 border px-4 py-2 rounded-lg text-sm font-semibold transition-all card-shadow ${showFilters ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+            className={`flex items-center gap-2 border px-5 py-2.5 rounded-2xl text-sm font-bold transition-all shadow-sm ${showFilters ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
           >
-            <Filter className="w-4 h-4" /> Filter
-          </button>
-          <button 
-            onClick={handleExportCSV}
-            className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all card-shadow"
-          >
-            <Download className="w-4 h-4" /> Export Data
+            <Filter className="w-4 h-4" /> تصفية النتائج
           </button>
           <button 
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 bg-blue-600 px-4 py-2 rounded-lg text-sm font-semibold text-white hover:bg-blue-700 transition-all shadow-md active:scale-95"
+            className="flex items-center gap-2 bg-linear-to-r from-blue-600 to-indigo-600 px-6 py-2.5 rounded-2xl text-sm font-bold text-white hover:shadow-lg hover:shadow-blue-500/25 transition-all shadow-md active:scale-95"
           >
-            <UserPlus className="w-4 h-4" /> Add Patient
+            <UserPlus className="w-4 h-4" /> تسجيل مريض جديد
           </button>
         </div>
       </div>
@@ -155,149 +109,127 @@ export default function Patients() {
       <AnimatePresence>
         {showFilters && (
           <motion.div 
-            initial={{ opacity: 0, height: 0, scale: 0.98 }}
-            animate={{ opacity: 1, height: 'auto', scale: 1 }}
-            exit={{ opacity: 0, height: 0, scale: 0.98 }}
-            className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-end overflow-hidden"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="glass p-6 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-wrap gap-6 items-end"
           >
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Status</label>
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">الحالة الطبية</label>
               <select 
                 value={filterStatus} 
                 onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                className="bg-slate-100 dark:bg-slate-800 border-none rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-blue-500/20 outline-none min-w-[200px]"
               >
-                <option value="">All Statuses</option>
-                <option value="Stable">Stable</option>
-                <option value="Recovering">Recovering</option>
-                <option value="Critical">Critical</option>
+                <option value="">جميع الحالات</option>
+                <option value="Stable">مستقر</option>
+                <option value="Recovering">قيد التعافي</option>
+                <option value="Critical">حرج</option>
               </select>
             </div>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Min Age</label>
-              <input 
-                type="number" 
-                value={filterMinAge} 
-                onChange={(e) => { setFilterMinAge(e.target.value); setPage(1); }}
-                className="w-24 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                placeholder="0"
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Max Age</label>
-              <input 
-                type="number" 
-                value={filterMaxAge} 
-                onChange={(e) => { setFilterMaxAge(e.target.value); setPage(1); }}
-                className="w-24 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
-                placeholder="100"
-              />
-            </div>
-            {(filterStatus || filterMinAge || filterMaxAge) && (
+            {filterStatus && (
               <button 
-                onClick={() => { setFilterStatus(''); setFilterMinAge(''); setFilterMaxAge(''); setPage(1); }}
-                className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-red-500 hover:bg-slate-50 px-3 py-2 rounded-lg transition-all"
+                onClick={() => { setFilterStatus(''); setPage(1); }}
+                className="flex items-center gap-2 text-xs font-black text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 px-4 py-2.5 rounded-xl transition-all"
               >
-                <X className="w-3 h-3" /> Clear Filters
+                <X className="w-4 h-4" /> مسح التصفية
               </button>
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Table Section */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden card-shadow">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+      {/* Main Table Container */}
+      <div className="glass rounded-[2rem] border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="relative w-full max-w-md">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
               type="text" 
-              placeholder="Search by name or ID..."
+              placeholder="ابحث بالاسم، الرقم الطبي، أو السجل..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+              className="w-full bg-slate-50 dark:bg-slate-800/50 border-none rounded-2xl pr-12 pl-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
             />
           </div>
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-widest px-4">
-            Total: {total} Patients
+          <div className="text-xs font-black text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full">
+            إجمالي المرضى: {total}
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-right border-collapse">
             <thead>
-              <tr className="bg-slate-50/50">
-                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  <button onClick={() => handleSort('name')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
-                    Patient <ArrowUpDown className="w-3 h-3" />
+              <tr className="bg-slate-50/50 dark:bg-slate-800/20">
+                <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest">
+                  <button onClick={() => handleSort('name')} className="flex items-center gap-2 hover:text-blue-600 transition-colors">
+                    المريض <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                   Age/Gender
+                <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-center">
+                   العمر / الجنس
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  <button onClick={() => handleSort('status')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
-                    Status <ArrowUpDown className="w-3 h-3" />
+                <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-center">
+                  <button onClick={() => handleSort('status')} className="flex items-center gap-2 hover:text-blue-600 transition-colors justify-center w-full">
+                    الحالة <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  <button onClick={() => handleSort('lastVisit')} className="flex items-center gap-1 hover:text-slate-600 transition-colors">
-                    Last Visit <ArrowUpDown className="w-3 h-3" />
+                <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-center">
+                  <button onClick={() => handleSort('lastVisit')} className="flex items-center gap-2 hover:text-blue-600 transition-colors justify-center w-full">
+                    آخر زيارة <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
+                <th className="px-8 py-5 text-xs font-black text-slate-400 uppercase tracking-widest text-left">التحكم</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               <AnimatePresence mode='wait'>
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      <td colSpan={5} className="px-6 py-4">
-                        <div className="h-10 bg-slate-100 rounded-lg w-full"></div>
+                      <td colSpan={5} className="px-8 py-6">
+                        <div className="h-12 bg-slate-100 dark:bg-slate-800/50 rounded-2xl w-full"></div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   filteredPatients.map((patient, idx) => (
                     <motion.tr 
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.05 }}
+                      initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
                       key={patient.id} 
-                      onClick={() => handleRowClick(patient)}
-                      className="hover:bg-slate-50/50 transition-colors cursor-pointer group"
+                      onClick={() => { setSelectedPatient(patient); setIsModalOpen(true); }}
+                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-all cursor-pointer group"
                     >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold border border-slate-200">
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 font-black border border-white dark:border-slate-700 shadow-sm group-hover:scale-110 transition-transform">
                             {patient.name.split(' ').map(n => n[0]).join('')}
                           </div>
                           <div>
-                            <div className="text-sm font-bold text-slate-800">{patient.name}</div>
-                            <div className="text-[10px] text-slate-400 font-mono italic">{patient.id}</div>
+                            <div className="text-sm font-black text-slate-800 dark:text-slate-100">{patient.name}</div>
+                            <div className="text-[10px] text-blue-500 font-mono italic font-bold">#{patient.id}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-slate-600">{patient.age}Y • {patient.gender}</div>
-                        <div className="text-[11px] text-slate-400">{patient.contact}</div>
+                      <td className="px-8 py-5 text-center">
+                        <div className="text-sm font-bold text-slate-600 dark:text-slate-400">{patient.age} سنة • {patient.gender === 'Male' ? 'ذكر' : 'أنثى'}</div>
+                        <div className="text-[11px] text-slate-400 font-mono mt-1">{patient.contact}</div>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${statusColors[patient.status]}`}>
-                          {patient.status}
+                      <td className="px-8 py-5 text-center">
+                        <span className={`inline-flex items-center px-4 py-1 rounded-full text-[10px] font-black border ${statusMap[patient.status]?.color || 'bg-slate-100'}`}>
+                          {statusMap[patient.status]?.label || patient.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-slate-600">{new Date(patient.lastVisit).toLocaleDateString()}</div>
+                      <td className="px-8 py-5 text-center">
+                        <div className="text-sm font-bold text-slate-600 dark:text-slate-400">{new Date(patient.lastVisit).toLocaleDateString('ar-EG')}</div>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
-                          <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="View Records">
-                            <FileText className="w-4 h-4" />
+                      <td className="px-8 py-5 text-left">
+                        <div className="flex justify-start gap-2">
+                          <button className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all" title="View Records">
+                            <FileText className="w-5 h-5" />
                           </button>
-                          <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all">
-                            <MoreVertical className="w-4 h-4" />
+                          <button className="p-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all">
+                            <MoreVertical className="w-5 h-5" />
                           </button>
                         </div>
                       </td>
@@ -310,27 +242,27 @@ export default function Patients() {
         </div>
 
         {/* Pagination Section */}
-        <div className="p-4 bg-slate-50/30 border-t border-slate-100 flex items-center justify-between">
-          <div className="text-xs font-medium text-slate-500">
-            Showing <span className="font-bold text-slate-700">{(page - 1) * 8 + 1}</span> to <span className="font-bold text-slate-700">{Math.min(page * 8, total)}</span> of <span className="font-bold text-slate-700">{total}</span> results
+        <div className="p-6 bg-slate-50/50 dark:bg-slate-800/10 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="text-xs font-bold text-slate-500 dark:text-slate-400">
+            عرض <span className="font-black text-slate-800 dark:text-white">{(page - 1) * 8 + 1}</span> إلى <span className="font-black text-slate-800 dark:text-white">{Math.min(page * 8, total)}</span> من <span className="font-black text-slate-800 dark:text-white">{total}</span> مريض
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button 
               disabled={page === 1 || loading}
               onClick={() => setPage(p => p - 1)}
-              className="p-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="p-3 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-white dark:hover:bg-slate-800 disabled:opacity-30 transition-all shadow-sm"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4" />
             </button>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               {[...Array(totalPages)].map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setPage(i + 1)}
-                  className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+                  className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${
                     page === i + 1 
-                      ? 'bg-blue-600 text-white shadow-md' 
-                      : 'hover:bg-white text-slate-500 border border-transparent hover:border-slate-200'
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20 scale-110' 
+                      : 'hover:bg-white dark:hover:bg-slate-800 text-slate-500 border border-transparent hover:border-slate-200 dark:hover:border-slate-700'
                   }`}
                 >
                   {i + 1}
@@ -340,64 +272,16 @@ export default function Patients() {
             <button 
               disabled={page === totalPages || loading}
               onClick={() => setPage(p => p + 1)}
-              className="p-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="p-3 border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-white dark:hover:bg-slate-800 disabled:opacity-30 transition-all shadow-sm"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
-
-      {/* Quick Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 card-shadow flex items-center gap-4">
-          <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center">
-            <CheckCircle className="w-6 h-6 text-green-600" />
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-slate-800">82%</div>
-            <div className="text-xs text-slate-400 font-bold uppercase">Stability Rate</div>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 card-shadow flex items-center gap-4">
-          <div className="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center">
-            <AlertTriangle className="w-6 h-6 text-red-600" />
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-slate-800">4</div>
-            <div className="text-xs text-slate-400 font-bold uppercase">Active Emergencies</div>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 card-shadow flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center">
-            <UserPlus className="w-6 h-6 text-blue-600" />
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-slate-800">12</div>
-            <div className="text-xs text-slate-400 font-bold uppercase">New Registrations Today</div>
-          </div>
-        </div>
-      </div>
       
-      <PatientModal 
-        patient={selectedPatient}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onUpdate={() => {
-          fetchPatients();
-          setIsModalOpen(false);
-        }}
-      />
-      
-      <AddPatientModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSuccess={() => {
-          setIsAddModalOpen(false);
-          setPage(1); // Reset to first page
-          fetchPatients();
-        }}
-      />
+      <PatientModal patient={selectedPatient} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onUpdate={fetchPatients} />
+      <AddPatientModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSuccess={() => { setIsAddModalOpen(false); setPage(1); fetchPatients(); }} />
     </div>
   );
 }
