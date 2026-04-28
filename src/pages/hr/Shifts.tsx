@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { CalendarDays, Plus, Clock, MapPin, User, ChevronLeft, ChevronRight, Filter, Search, RotateCcw } from 'lucide-react';
-import { hrService, Shift, Staff } from '../../services/hrService';
+import { getShifts, getStaff, Shift, Staff } from '../../services/hrService';
 
 export default function ShiftsPage() {
   const [shifts, setShifts] = useState<Shift[]>([]);
@@ -11,8 +11,8 @@ export default function ShiftsPage() {
   const loadData = useCallback(async () => {
     try {
       const [shiftData, staffData] = await Promise.all([
-        hrService.getShifts(),
-        hrService.getStaff()
+        getShifts(),
+        getStaff()
       ]);
       setShifts(shiftData);
       setStaff(staffData);

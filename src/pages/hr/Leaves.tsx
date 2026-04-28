@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { ClipboardList, Plus, Calendar, Clock, CheckCircle, XCircle, User, Info, Search, Filter, RotateCcw } from 'lucide-react';
-import { hrService, LeaveRequest, Staff } from '../../services/hrService';
+import { getLeaves, getStaff, LeaveRequest, Staff } from '../../services/hrService';
 
 export default function LeavesPage() {
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
@@ -11,8 +11,8 @@ export default function LeavesPage() {
   const loadData = useCallback(async () => {
     try {
       const [leaveData, staffData] = await Promise.all([
-        hrService.getLeaves(),
-        hrService.getStaff()
+        getLeaves(),
+        getStaff()
       ]);
       setLeaves(leaveData);
       setStaff(staffData);

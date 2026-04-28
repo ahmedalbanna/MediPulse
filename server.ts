@@ -145,36 +145,48 @@ async function startServer() {
   const appointments = [
     {
       id: 'APP001',
-      patientId: 'PT001',
-      patientName: 'James Wilson',
+      patientId: 'PT015',
+      patientName: 'أحمد محمود',
       doctor: 'Dr. Sarah Wilson',
-      date: '2024-04-28',
+      doctorId: 'USR001',
+      date: new Date().toISOString().split('T')[0],
       time: '09:00',
       duration: 30,
       type: 'Consultation',
-      status: 'Confirmed'
+      status: 'Waiting',
+      priority: 'Medium',
+      room: 'Room 101',
+      notes: 'Routine checkup for blood pressure.'
     },
     {
       id: 'APP002',
-      patientId: 'PT002',
-      patientName: 'Emma Thompson',
-      doctor: 'Dr. Michael Chen',
-      date: '2024-04-28',
+      patientId: 'PT016',
+      patientName: 'سارة خالد',
+      doctor: 'Dr. Sarah Wilson',
+      doctorId: 'USR001',
+      date: new Date().toISOString().split('T')[0],
       time: '10:30',
       duration: 45,
       type: 'Follow-up',
-      status: 'Confirmed'
+      status: 'Confirmed',
+      priority: 'Low',
+      room: 'Room 101',
+      notes: 'Should come after physical therapy.'
     },
     {
       id: 'APP003',
-      patientId: 'PT004',
-      patientName: 'Sophia Martinez',
+      patientId: 'PT017',
+      patientName: 'فهد العتيبي',
       doctor: 'Dr. Sarah Wilson',
-      date: '2024-04-29',
-      time: '14:00',
+      doctorId: 'USR001',
+      date: new Date().toISOString().split('T')[0],
+      time: '11:00',
       duration: 30,
-      type: 'Examination',
-      status: 'Pending'
+      type: 'Emergency',
+      status: 'In-Progress',
+      priority: 'Emergency',
+      room: 'Room 102',
+      notes: 'Acute respiratory distress.'
     }
   ];
 
@@ -384,6 +396,28 @@ async function startServer() {
 
   app.get("/api/appointments", (req, res) => {
     res.json(appointments);
+  });
+
+  app.patch("/api/appointments/:id", (req, res) => {
+    const { id } = req.params;
+    const index = appointments.findIndex(a => a.id === id);
+    if (index !== -1) {
+      appointments[index] = { ...appointments[index], ...req.body };
+      res.json(appointments[index]);
+    } else {
+      res.status(404).json({ error: "Appointment not found" });
+    }
+  });
+
+  app.delete("/api/appointments/:id", (req, res) => {
+    const { id } = req.params;
+    const index = appointments.findIndex(a => a.id === id);
+    if (index !== -1) {
+      appointments.splice(index, 1);
+      res.status(204).send();
+    } else {
+      res.status(404).json({ error: "Appointment not found" });
+    }
   });
 
   app.post("/api/appointments", (req, res) => {

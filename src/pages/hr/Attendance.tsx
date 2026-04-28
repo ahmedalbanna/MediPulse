@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Clock, LogIn, LogOut, CheckCircle2, AlertCircle, Calendar as CalendarIcon, User, Search, Filter, MoreVertical, RotateCcw } from 'lucide-react';
-import { hrService, Attendance, Staff } from '../../services/hrService';
+import { getAttendance, getStaff, Attendance, Staff } from '../../services/hrService';
 
 export default function AttendancePage() {
   const [attendance, setAttendance] = useState<Attendance[]>([]);
@@ -11,8 +11,8 @@ export default function AttendancePage() {
   const loadData = useCallback(async () => {
     try {
       const [attData, staffData] = await Promise.all([
-        hrService.getAttendance(),
-        hrService.getStaff()
+        getAttendance(),
+        getStaff()
       ]);
       setAttendance(attData);
       setStaff(staffData);

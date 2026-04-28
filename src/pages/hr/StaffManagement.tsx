@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Users, UserPlus, Search, MoreVertical, Shield, Briefcase, Calendar, Filter, DollarSign, RotateCcw } from 'lucide-react';
-import { hrService, Staff } from '../../services/hrService';
+import { getStaff, Staff } from '../../services/hrService';
 
 export default function StaffManagement() {
   const [staff, setStaff] = useState<Staff[]>([]);
@@ -10,7 +10,7 @@ export default function StaffManagement() {
 
   const loadStaff = useCallback(async () => {
     try {
-      const data = await hrService.getStaff();
+      const data = await getStaff();
       setStaff(data);
     } catch (error) {
       console.error('Failed to load staff:', error);
