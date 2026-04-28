@@ -10,6 +10,7 @@ const mainNavItems = [
   { path: '/pharmacy', label: 'الصيدلية وصرف الأدوية', icon: Pill },
   { path: '/ai-diagnostics', label: 'التشخيص الذكي (AI)', icon: Activity },
   { path: '/billing', label: 'الفواتير والمالية', icon: DollarSign },
+  { path: '/analytics', label: 'التقارير والتحليلات', icon: TrendingUp },
 ];
 
 const hrNavItems = [

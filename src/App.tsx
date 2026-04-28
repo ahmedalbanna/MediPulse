@@ -10,6 +10,7 @@ import Inventory from './pages/Inventory';
 import Pharmacy from './pages/Pharmacy';
 import UserManagement from './pages/settings/UserManagement';
 import Billing from './pages/Billing';
+import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import HelpSupport from './pages/HelpSupport';
 import StaffManagement from './pages/hr/StaffManagement';
@@ -32,6 +33,7 @@ export default function App() {
             <Route path="/records" element={<MedicalRecords />} />
             <Route path="/ai-diagnostics" element={<AIDiagnostics />} />
             <Route path="/billing" element={<Billing />} />
+            <Route path="/analytics" element={<Analytics />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/pharmacy" element={<Pharmacy />} />
             <Route path="/hr/staff" element={<StaffManagement />} />

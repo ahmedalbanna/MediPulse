@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
+import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import { getAppointments, Appointment } from '../services/appointmentService';
 import { getPatients, Patient } from '../services/patientService';
 import { getMedicalRecords, MedicalRecord } from '../services/recordService';
@@ -35,7 +36,8 @@ const quickLinks = [
   { label: 'تسجيل مريض', icon: User, path: '/patients', color: 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800' },
   { label: 'السجلات الطبية', icon: ClipboardList, path: '/records', color: 'bg-purple-50 text-purple-600 border-purple-100 dark:bg-purple-900/20 dark:border-purple-800' },
   { label: 'ذكاء التشخيص', icon: Brain, path: '/ai-diagnostics', color: 'bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800' },
-  { label: 'الصيدلية', icon: Pill, path: '/records', color: 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800' },
+  { label: 'التقارير الذكية', icon: TrendingUp, path: '/analytics', color: 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800' },
+  { label: 'الصيدلية', icon: Pill, path: '/records', color: 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:border-blue-800' },
 ];
 
 export default function Dashboard() {
@@ -353,6 +355,53 @@ export default function Dashboard() {
 
         </div>
       </div>
+
+      {/* New Activity Trend Section */}
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="glass rounded-[3rem] p-10 border border-slate-100 dark:border-slate-800 shadow-2xl"
+      >
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-4">
+              <TrendingUp className="w-8 h-8 text-emerald-500" />
+              تحليل إشغال العيادات والأداء السريري
+            </h3>
+            <p className="text-xs font-bold text-slate-500 mt-2">بيانات حية لمعدل تدفق المرضى على مدار الـ 24 ساعة الماضية</p>
+          </div>
+          <Link to="/analytics" className="bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white px-6 py-3 rounded-2xl text-[10px] font-black tracking-widest uppercase hover:bg-slate-100 transition-all border border-slate-200 dark:border-slate-700">
+            التحليلات التفصيلية
+          </Link>
+        </div>
+        <div className="h-[250px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={[
+              { name: '08:00', value: 12 },
+              { name: '10:00', value: 45 },
+              { name: '12:00', value: 78 },
+              { name: '14:00', value: 65 },
+              { name: '16:00', value: 42 },
+              { name: '18:00', value: 30 },
+              { name: '20:00', value: 15 },
+            ]}>
+              <defs>
+                <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontWeight: 'bold', fill: '#94a3b8' }} />
+              <YAxis hide />
+              <Tooltip 
+                contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '12px', fontWeight: 'bold' }}
+              />
+              <Area type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={4} fillOpacity={1} fill="url(#colorVal)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </motion.div>
     </div>
   );
 }

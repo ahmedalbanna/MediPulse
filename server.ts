@@ -419,6 +419,65 @@ async function startServer() {
     });
   });
 
+  // Analytics Endpoints
+  const analyticsData = {
+    medical: {
+      totalDiagnoses: 1250,
+      criticalCases: 42,
+      recoveredPatients: 1180,
+      diagnosisDistribution: [
+        { category: 'Respiratory', value: 35 },
+        { category: 'Cardiology', value: 20 },
+        { category: 'Orthopedic', value: 15 },
+        { category: 'General', value: 30 },
+      ]
+    },
+    financial: {
+      totalRevenue: 85400,
+      totalExpenses: 32200,
+      netIncome: 53200,
+      monthlyPerformance: [
+        { month: 'Jan', revenue: 12000, expenses: 5000 },
+        { month: 'Feb', revenue: 15000, expenses: 6000 },
+        { month: 'Mar', revenue: 18000, expenses: 7500 },
+        { month: 'Apr', revenue: 22000, expenses: 8000 },
+      ],
+      revenueByDepartment: [
+        { dept: 'ER', value: 45000 },
+        { dept: 'OPD', value: 25000 },
+        { dept: 'Pharmacy', value: 15400 },
+      ]
+    },
+    operational: {
+      avgWaitTime: 18,
+      clinicOccupancy: 82,
+      staffEfficiency: 94,
+      appointmentsByStatus: [
+        { status: 'Completed', count: 450 },
+        { status: 'Cancelled', count: 32 },
+        { status: 'Rescheduled', count: 58 },
+      ],
+      waitingTimeTrend: [
+        { day: 'Mon', time: 15 },
+        { day: 'Tue', time: 22 },
+        { day: 'Wed', time: 18 },
+        { day: 'Thu', time: 12 },
+        { day: 'Fri', time: 25 },
+        { day: 'Sat', time: 10 },
+        { day: 'Sun', time: 8 },
+      ]
+    },
+    doctorPerformance: [
+      { doctorId: 'D001', name: 'د. سارة أحمد', specialty: 'Cardiology', patientsTreated: 120, avgRating: 4.9, efficiency: 96 },
+      { doctorId: 'D002', name: 'د. خالد منصور', specialty: 'Orthopedics', patientsTreated: 95, avgRating: 4.7, efficiency: 92 },
+      { doctorId: 'D003', name: 'د. ليلى حسن', specialty: 'Pediatrics', patientsTreated: 150, avgRating: 4.8, efficiency: 98 },
+    ]
+  };
+
+  app.get("/api/analytics/full-report", (req, res) => {
+    res.json(analyticsData);
+  });
+
   app.get("/api/appointments", (req, res) => {
     res.json(appointments);
   });
