@@ -16,7 +16,22 @@ const SYSTEM_MODULES = [
 
 import { Calendar } from 'lucide-react';
 
+import { useAuth } from '../../contexts/AuthContext';
+import { UserRole } from '../../services/userService';
+
+const ROLE_LABELS: Record<UserRole, string> = {
+  'Admin': 'مدير النظام',
+  'Doctor': 'طبيب استشاري',
+  'Receptionist': 'موظف استقبال',
+  'Pharmacist': 'صيدلي مسؤول',
+  'Accountant': 'محاسب مالي',
+  'HR': 'مدير موارد بشرية',
+  'Nurse': 'ممرض ممارس',
+  'Patient': 'مريض مسجل'
+};
+
 export default function Header() {
+  const { currentUser, switchRole } = useAuth();
   const [query, setQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -191,10 +206,12 @@ export default function Header() {
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-3 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shadow-sm"
             >
-              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-[10px] shadow-lg shadow-blue-500/20">AB</div>
+              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-[10px] shadow-lg shadow-blue-500/20">
+                {currentUser?.name.split(' ').map(n => n[0]).join('')}
+              </div>
               <div className="text-right hidden sm:block">
-                <div className="text-xs font-bold text-slate-800 dark:text-slate-100">د. أحمد البنا</div>
-                <div className="text-[9px] text-slate-500 font-bold">طبيب استشاري</div>
+                <div className="text-xs font-bold text-slate-800 dark:text-slate-100">{currentUser?.name}</div>
+                <div className="text-[9px] text-slate-500 font-bold">{ROLE_LABELS[currentUser?.role || 'Doctor']}</div>
               </div>
             </button>
             
@@ -204,12 +221,28 @@ export default function Header() {
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute top-12 left-0 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 py-2 overflow-hidden z-50 text-right"
+                  className="absolute top-12 left-0 w-72 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 py-2 overflow-hidden z-50 text-right"
                 >
                   <div className="px-4 py-3 border-b border-slate-50 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
-                    <div className="text-sm font-bold text-slate-800 dark:text-slate-100">د. أحمد البنا</div>
-                    <div className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">استشاري جراحة القلب</div>
+                    <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{currentUser?.name}</div>
+                    <div className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">{currentUser?.department}</div>
                   </div>
+                  
+                  <div className="p-2 border-b border-slate-50 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/20">
+                    <div className="px-3 py-1 text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 text-right">تبديل الدور (ديمو)</div>
+                    <div className="grid grid-cols-2 gap-1" dir="rtl">
+                      {(Object.keys(ROLE_LABELS) as UserRole[]).map(role => (
+                        <button 
+                          key={role}
+                          onClick={() => { switchRole(role); setIsProfileOpen(false); }}
+                          className={`text-[10px] px-2 py-1.5 rounded-lg font-bold text-right transition-all ${currentUser?.role === role ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                        >
+                          {ROLE_LABELS[role]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="py-2">
                     <Link to="/settings" className="flex items-center justify-end gap-3 px-4 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-blue-600 transition-colors font-bold">
                       <span>إعدادات الحساب</span>

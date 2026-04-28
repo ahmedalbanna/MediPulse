@@ -212,10 +212,12 @@ async function startServer() {
   ];
 
   let users = [
-    { id: 'USR001', name: 'Dr. Sarah Wilson', email: 's.wilson@hospital.com', role: 'Doctor', department: 'Cardiology', status: 'Active', permissions: ['view_patients', 'edit_records', 'prescribe_meds'] },
-    { id: 'USR002', name: 'John Doe', email: 'j.doe@hospital.com', role: 'Admin', department: 'Administration', status: 'Active', permissions: ['all'] },
-    { id: 'USR003', name: 'Nurse Emily Brown', email: 'e.brown@hospital.com', role: 'Nurse', department: 'Emergency', status: 'Active', permissions: ['view_patients', 'update_vitals'] },
-    { id: 'USR004', name: 'James Wilson', email: 'james.w@gmail.com', role: 'Patient', department: 'Outpatient', status: 'Active', permissions: ['view_own_records'] },
+    { id: 'USR001', name: 'Dr. Sarah Wilson', email: 's.wilson@hospital.com', role: 'Doctor', department: 'Cardiology', status: 'Active', permissions: ['view_patients', 'view_appointments', 'view_records', 'diagnostics', 'visit_assistant'] },
+    { id: 'USR002', name: 'Ahmed Al-Banna', email: 'admin@mediflow.com', role: 'Admin', department: 'IT / Administration', status: 'Active', permissions: ['*'] },
+    { id: 'USR003', name: 'Emily Brown', email: 'e.brown@hospital.com', role: 'Receptionist', department: 'Front Desk', status: 'Active', permissions: ['view_patients', 'view_appointments', 'billing'] },
+    { id: 'USR004', name: 'Marcus Chen', email: 'm.chen@hospital.com', role: 'Pharmacist', department: 'Pharmacy', status: 'Active', permissions: ['pharmacy', 'inventory'] },
+    { id: 'USR005', name: 'Sofia Rodriguez', email: 's.rodriguez@hospital.com', role: 'Accountant', department: 'Finance', status: 'Active', permissions: ['billing', 'analytics'] },
+    { id: 'USR006', name: 'Khalid Mansour', email: 'k.mansour@hospital.com', role: 'HR', department: 'Human Resources', status: 'Active', permissions: ['hr_staff', 'hr_attendance', 'hr_shifts', 'hr_leaves', 'manage_users'] },
   ];
 
   let staff = [

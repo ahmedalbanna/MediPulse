@@ -6,18 +6,29 @@ import { getUsers, updateUser, deleteUser, User, createUser } from '../../servic
 const ROLE_COLORS: Record<string, string> = {
   'Admin': 'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800',
   'Doctor': 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-800',
-  'Nurse': 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800',
+  'Receptionist': 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800',
+  'Pharmacist': 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:text-purple-400 dark:border-purple-800',
+  'Accountant': 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
+  'HR': 'bg-pink-100 text-pink-700 border-pink-200 dark:bg-pink-950/30 dark:text-pink-400 dark:border-pink-800',
+  'Nurse': 'bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-950/30 dark:text-cyan-400 dark:border-cyan-800',
   'Patient': 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700',
 };
 
 const PERMISSION_PRESETS: Record<string, string[]> = {
-  'Doctor': ['عرض_المرضى', 'تعديل_السجلات', 'وصف_الأدوية', 'إدارة_المواعيد'],
-  'Admin': ['الوصول_الكامل'],
+  'Admin': ['all'],
+  'Doctor': ['عرض_المرضى', 'عرض_المواعيد', 'عرض_السجلات', 'التشخيص_الذكي', 'مساعد_الزيارة'],
+  'Receptionist': ['عرض_المرضى', 'عرض_المواعيد', 'إدارة_الفواتير'],
+  'Pharmacist': ['إدارة_الصيدلية', 'إدارة_المخزون'],
+  'Accountant': ['إدارة_الفواتير', 'عرض_التحليلات'],
+  'HR': ['إدارة_الموظفين', 'الحضور_والانصراف', 'المناوبات', 'الإجازات', 'إدارة_المستخدمين'],
   'Nurse': ['عرض_المرضى', 'تسجيل_العلامات_الحيوية', 'إدارة_المواعيد'],
   'Patient': ['عرض_السجلات_الخاصة', 'جدولة_موعد'],
 };
 
+import { useAuth } from '../../contexts/AuthContext';
+
 export default function UserManagement() {
+  const { currentUser: authUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -159,7 +170,8 @@ export default function UserManagement() {
                         </button>
                         <button 
                           onClick={() => handleDelete(user.id)}
-                          className="p-3 hover:bg-red-50 dark:hover:bg-red-900/10 text-slate-300 hover:text-red-600 rounded-xl transition-all border border-slate-100 dark:border-slate-800"
+                          disabled={user.id === authUser?.id}
+                          className={`p-3 rounded-xl transition-all border border-slate-100 dark:border-slate-800 ${user.id === authUser?.id ? 'opacity-20 cursor-not-allowed' : 'hover:bg-red-50 dark:hover:bg-red-900/10 text-slate-300 hover:text-red-600'}`}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -272,6 +284,10 @@ export default function UserManagement() {
                     <select name="role" defaultValue={editingUser?.role || 'Doctor'} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all dark:text-white appearance-none">
                       <option value="Admin">مسؤول نظام (Admin)</option>
                       <option value="Doctor">طبيب ممارس (Doctor)</option>
+                      <option value="Receptionist">موظف استقبال (Receptionist)</option>
+                      <option value="Pharmacist">صيدلي (Pharmacist)</option>
+                      <option value="Accountant">محاسب (Accountant)</option>
+                      <option value="HR">الموارد البشرية (HR)</option>
                       <option value="Nurse">ممرض طبي (Nurse)</option>
                       <option value="Patient">مريض (Patient)</option>
                     </select>

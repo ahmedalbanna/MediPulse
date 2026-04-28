@@ -1,11 +1,23 @@
+export type UserRole = 'Admin' | 'Doctor' | 'Receptionist' | 'Pharmacist' | 'Accountant' | 'HR' | 'Nurse' | 'Patient';
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'Admin' | 'Doctor' | 'Nurse' | 'Patient';
+  role: UserRole;
   department: string;
   status: 'Active' | 'Inactive';
   permissions: string[];
+}
+
+let currentUser: User | null = { id: 'USR002', name: 'Ahmed Al-Banna', email: 'admin@mediflow.com', role: 'Admin', department: 'IT / Administration', status: 'Active', permissions: ['*'] };
+
+export function getCurrentUser() {
+  return currentUser;
+}
+
+export function setCurrentUser(user: User | null) {
+  currentUser = user;
 }
 
 export async function getUsers() {
